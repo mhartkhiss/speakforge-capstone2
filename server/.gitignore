@@ -10,5 +10,8 @@ __pycache__/
 #add .env.local
 .env.local
 
+#add env.yaml
+env.yaml
+
 speakforge_firebase.json
 
