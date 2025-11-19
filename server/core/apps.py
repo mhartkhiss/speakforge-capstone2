@@ -7,4 +7,11 @@ class CoreConfig(AppConfig):
     name = 'core'
 
     def ready(self):
-        initialize_firebase()
+        try:
+            initialize_firebase()
+        except Exception as e:
+            # Log error but don't crash during build (e.g. collectstatic)
+            import sys
+            if 'collectstatic' not in sys.argv:
+                raise e
+            print(f"Skipping Firebase initialization during build: {e}")
