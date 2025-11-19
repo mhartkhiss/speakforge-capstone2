@@ -114,8 +114,8 @@ def translate_with_claude(text, source_language, target_language, variants, tran
     temperature = 0 if variants == 'single' else 0.7
 
     message = anthropic_client.messages.create(
-        #model="claude-3-7-sonnet-20250219",
-        model="claude-3-5-sonnet-20241022",
+        model="claude-3-7-sonnet-20250219",
+        #model="claude-3-5-sonnet-20241022",
         max_tokens=8192,
         temperature=temperature,
         system=system_message,
