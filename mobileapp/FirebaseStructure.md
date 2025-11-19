@@ -1,0 +1,269 @@
+# Firebase Realtime Database Structure - SpeakForge App
+
+This document describes the structure of the Firebase Realtime Database used in the SpeakForge application, a language translation app.
+
+## Database Root Structure
+
+```
+speakforge-appdev/
+│
+├── users/
+│   └── {userId}/
+│       ├── userId: String
+│       ├── username: String
+│       ├── email: String
+│       ├── profileImageUrl: String
+│       ├── language: String
+│       ├── accountType: String
+│       ├── createdAt: String (timestamp)
+│       ├── lastLoginDate: String (timestamp)
+│       ├── translator: String (default: "google")
+│       ├── lastMessage: String
+│       ├── lastMessageTime: Long
+│       └── contactsettings/
+│           └── {contactUserId}/
+│               └── translateMessages: Boolean
+│
+├── messages/
+│   └── {roomId}/  (composed of user1id_user2id)
+│       └── {messageId}/
+│           ├── messageId: String
+│           ├── message: String (original message)
+│           ├── timestamp: Long
+│           ├── senderId: String
+│           ├── senderLanguage: String (language of the sender)
+│           ├── translationMode: String (formal or casual)
+│           ├── translationState: String (TRANSLATING, TRANSLATED, REMOVED, or null)
+│           ├── isVoiceMessage: Boolean (false for text messages, true for voice messages)
+│           ├── voiceText: String (transcribed voice text, same as message for voice messages)
+│           ├── replyToMessageId: String (ID of the message this is replying to)
+│           ├── replyToSenderId: String (ID of the sender of the original message)
+│           ├── replyToMessage: String (Content of the original message)
+│           └── translations/
+│               ├── translation1: String (first translation of the message)
+│               ├── translation2: String (second translation of the message)
+│               └── translation3: String (third translation of the message)
+│
+├── connect_chats/
+│   └── {sessionId}/  (composed of user1id_user2id - voice-only sessions)
+│       └── {messageId}/
+│           ├── messageId: String
+│           ├── message: String (transcribed voice message)
+│           ├── timestamp: Long
+│           ├── senderId: String
+│           ├── senderLanguage: String (language of the sender)
+│           ├── translationMode: String (formal or casual)
+│           ├── translationState: String (TRANSLATING, TRANSLATED, REMOVED, or null)
+│           ├── isVoiceMessage: Boolean (always true for connect chat messages)
+│           ├── voiceText: String (transcribed voice text, same as message)
+│           ├── isSessionEnd: Boolean (true if this is a session end message)
+│           ├── replyToMessageId: String (ID of the message this is replying to)
+│           ├── replyToSenderId: String (ID of the sender of the original message)
+│           ├── replyToMessage: String (Content of the original message)
+│           └── translations/
+│               ├── translation1: String (first translation of the message)
+│               ├── translation2: String (second translation of the message)
+│               └── translation3: String (third translation of the message)
+│
+├── connection_requests/
+│   └── {requestId}/  (unique request identifier)
+│       ├── requestId: String
+│       ├── fromUserId: String (user who initiated the request)
+│       ├── toUserId: String (user who should receive the request)
+│       ├── sessionId: String (proposed connect chat session ID)
+│       ├── status: String (PENDING, ACCEPTED, REJECTED, TIMEOUT, EXPIRED, CANCELLED)
+│       ├── timestamp: Long (when request was created)
+│       ├── fromUserName: String
+│       ├── fromUserLanguage: String
+│       ├── fromUserProfileImageUrl: String
+│       └── expiresAt: Long (when request expires)
+│
+│
+├── groups/
+│   └── {groupId}/
+│       ├── groupId: String
+│       ├── name: String
+│       ├── description: String
+│       ├── createdAt: Long
+│       ├── createdBy: String (userId of creator)
+│       ├── groupImageUrl: String
+│       ├── lastMessage: String
+│       ├── lastMessageTime: Long
+│       ├── lastMessageSenderId: String
+│       └── members/
+│           └── {userId}: Boolean (true if admin, false if regular member)
+│
+├── group_messages/
+│   └── {groupId}/
+│       └── {messageId}/
+│           ├── messageId: String
+│           ├── message: String (original message)
+│           ├── timestamp: Long
+│           ├── senderId: String
+│           ├── senderLanguage: String (language of the sender)
+│           ├── translationMode: String (formal or casual)
+│           └── translations/
+│               └── {language}: String (message translated to specific language, including original in sender's language)
+│
+├── usage_statistics/
+│   └── {date}/  (YYYY-MM-DD format)
+│       ├── date: String (YYYY-MM-DD)
+│       ├── totalUsers: Number
+│       ├── activeUsersLast7Days: Number
+│       ├── premiumUsers: Number
+│       ├── freeUsers: Number
+│       ├── newUsersToday: Number
+│       ├── dailyLoginCount: Number
+│       ├── languageDistribution: Object
+│       │   └── {language}: Number (count of users using this language)
+│       ├── createdAt: String (ISO timestamp)
+│       └── calculatedAt: String (ISO timestamp when stats were calculated)
+
+├── settings/
+│   ├── backendUrl: String (API base URL for mobile app backend communication)
+│   ├── apkDownloadUrl: String (URL for APK download and QR codes)
+│   ├── updatedAt: String (ISO timestamp when settings were last updated)
+│   └── updatedBy: String (identifier of who last updated the settings)
+│
+```
+
+## Details of Key Nodes
+
+### Users
+
+The `users` node stores information about registered users:
+
+- **userId**: Unique identifier for the user (Firebase Auth UID)
+- **username**: Display name of the user
+- **email**: User's email address
+- **profileImageUrl**: URL to the user's profile image (stored in Firebase Storage)
+- **language**: User's preferred language (optional, set when user first logs in)
+- **accountType**: Type of user account (e.g., free, premium)
+- **createdAt**: Timestamp of account creation
+- **lastLoginDate**: Timestamp of the last login (optional, set when user first logs in)
+- **translator**: Preferred translation service (default: "google")
+- **lastMessage**: Last message sent by the user
+- **lastMessageTime**: Timestamp of the last message
+- **contactsettings**: Contains per-contact preferences and settings
+  - **{contactUserId}**: User ID of the contact for which settings are defined
+    - **translateMessages**: Boolean flag indicating whether to translate messages for this contact
+
+### Messages
+
+The `messages` node organizes messages by conversation room:
+
+- **roomId**: Unique identifier for a conversation room (composed of user1id_user2id)
+- **messageId**: Unique identifier for each message in the room
+  - **messageId**: String identifier of the message
+  - **message**: Original message content
+  - **timestamp**: When the message was sent
+  - **senderId**: User ID of the message sender
+  - **senderLanguage**: The language of the sender
+  - **translationMode**: Formal or casual translation style
+  - **translationState**: Current state of message translation
+    - **TRANSLATING**: Message is currently being translated
+    - **TRANSLATED**: Message has been successfully translated
+    - **REMOVED**: Translations have been removed
+    - **null**: No translation or translation failed
+  - **translations**: Map of translations for the message
+    - **translation1**: First translation variant of the message
+    - **translation2**: Second translation variant of the message
+    - **translation3**: Third translation variant of the message
+
+### Groups
+
+The `groups` node stores information about group conversations:
+
+- **groupId**: Unique identifier for the group
+- **name**: Display name of the group
+- **description**: Description of the group
+- **createdAt**: Timestamp of group creation
+- **createdBy**: User ID of the group creator
+- **groupImageUrl**: URL to the group's image
+- **lastMessage**: Last message sent in the group
+- **lastMessageTime**: Timestamp of the last message
+- **lastMessageSenderId**: User ID of the last message sender
+- **members**: Map of user IDs to boolean values
+  - **{userId}**: Boolean value indicating admin status (true = admin, false = regular member)
+
+### Group Messages
+
+The `group_messages` node organizes messages by group conversation:
+
+- **groupId**: Unique identifier for a group
+- **messageId**: Unique identifier for each message in the group
+  - **messageId**: String identifier of the message
+  - **message**: Original message content
+  - **timestamp**: When the message was sent
+  - **senderId**: User ID of the message sender
+  - **senderLanguage**: The language of the sender
+  - **translationMode**: Formal or casual translation style
+  - **translations**: Map of language codes to translated message strings
+    - **{language}**: Message translated to specific language, including original in sender's language
+
+### Usage Statistics
+
+The `usage_statistics` node stores daily snapshots of application usage metrics for historical analysis:
+
+- **date**: Date in YYYY-MM-DD format (used as the key)
+- **totalUsers**: Total number of registered users on this date
+- **activeUsersLast7Days**: Number of unique users who logged in during the 7 days ending on this date
+- **premiumUsers**: Number of users with premium accounts on this date
+- **freeUsers**: Number of users with free accounts on this date
+- **newUsersToday**: Number of new user registrations on this specific date
+- **dailyLoginCount**: Number of unique users who logged in on this specific date
+- **languageDistribution**: Object containing the count of users by preferred language
+  - **{language}**: Number of users who have this language set as their preference
+- **createdAt**: ISO timestamp when this record was first created
+- **calculatedAt**: ISO timestamp when these statistics were last calculated/updated
+
+This structure enables:
+- Historical trend analysis
+- Percentage change calculations vs previous periods
+- Growth rate tracking
+- Language preference evolution over time
+- User engagement pattern analysis
+
+### Settings
+
+The `settings` node stores application-wide configuration that is managed by the Django backend server through admin API endpoints:
+
+- **backendUrl**: The base URL for API endpoints used by the mobile application
+- **apkDownloadUrl**: The URL for downloading the mobile app APK and generating QR codes
+- **updatedAt**: Timestamp when the settings were last modified (ISO format)
+- **updatedBy**: Identifier of the administrator who made the last change
+
+**Management**: Settings are created and updated through the Django admin API (`/admin/settings/`) rather than directly by the web admin panel. The web admin panel makes API calls to the Django backend, which then updates Firebase. This provides centralized control and proper authentication/authorization.
+
+This allows administrators to update backend URLs and APK download links without requiring app updates. The mobile app loads these settings from Firebase during initialization and uses them for all API calls and download features.
+
+## Local Application Data
+
+The following data structures are maintained locally in the application and not stored in Firebase:
+
+### Translation History
+
+Translation history is stored locally on the device:
+
+- **originalText**: The text before translation
+- **translatedText**: The text after translation
+- **sourceLanguage**: The language of the original text
+- **targetLanguage**: The language the text was translated to
+- **translator**: The translation service used (e.g., "google")
+- **timestamp**: When the translation was performed
+
+### Languages
+
+The supported languages data is stored locally on the device:
+
+- **languageCode**: The code identifier for the language (e.g., "en", "es")
+- **name**: The English name of the language
+- **nativeName**: The name of the language in its native form
+
+## Authentication
+
+The application uses Firebase Authentication with email/password sign-in method. User accounts are created and managed through Firebase Auth, with additional user information stored in the Realtime Database.
+
+## Storage References
+
+Profile images and other media content are stored in Firebase Storage, with references to these files stored in the Realtime Database. 

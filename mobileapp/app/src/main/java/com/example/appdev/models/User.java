@@ -1,0 +1,145 @@
+package com.example.appdev.models;
+
+public class User {
+    private String userId;
+    private String username;
+    private String email;
+    private String profileImageUrl;
+    private String language;
+    private String accountType;
+    private String createdAt;
+    private String lastLoginDate;
+    private String translator;
+    private String lastMessage;
+    private long lastMessageTime;
+    private Long lastActivityTime; // For recent connections sorting
+    private boolean isAdmin; // Added for group chat functionality
+
+    public User() {
+        // Default constructor required for Firebase
+    }
+
+    public User(String userId, String username, String email, String profileImageUrl, String accountType,
+                String language, String createdAt, String lastLoginDate, String translator) {
+        this.userId = userId;
+        this.username = username;
+        this.email = email;
+        this.profileImageUrl = profileImageUrl;
+        this.accountType = accountType;
+        this.language = language;
+        this.createdAt = createdAt;
+        this.lastLoginDate = lastLoginDate;
+        this.translator = translator;
+        this.isAdmin = false;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    // Added to maintain compatibility with code that uses getProfilePictureUrl()
+    public String getProfilePictureUrl() {
+        return profileImageUrl;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setAccountType(String accountType) {
+        this.accountType = accountType;
+    }
+
+    public String getAccountType() {
+        return accountType;
+    }
+
+    public void setLastLoginDate(String lastLoginDate) {
+        this.lastLoginDate = lastLoginDate;
+    }
+
+    public String getLastLoginDate() {
+        return lastLoginDate;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setTranslator(String translator) {
+        this.translator = translator;
+    }
+
+    public String getTranslator() {
+        return translator;
+    }
+
+    public String getLastMessage() {
+        return lastMessage;
+    }
+
+    public void setLastMessage(String lastMessage) {
+        this.lastMessage = lastMessage;
+    }
+
+    public long getLastMessageTime() {
+        return lastMessageTime;
+    }
+
+    public void setLastMessageTime(long lastMessageTime) {
+        this.lastMessageTime = lastMessageTime;
+    }
+
+    public Long getLastActivityTime() {
+        return lastActivityTime;
+    }
+
+    public void setLastActivityTime(Long lastActivityTime) {
+        this.lastActivityTime = lastActivityTime;
+    }
+
+    // Added for group chat functionality
+    public boolean isAdmin() {
+        return isAdmin;
+    }
+    
+    public void setAdmin(boolean isAdmin) {
+        this.isAdmin = isAdmin;
+    }
+}
