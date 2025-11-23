@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Box,
   CircularProgress,
   Typography,
   Button,
-  Grid
+  Grid,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   Add as AddIcon
@@ -26,13 +27,12 @@ import {
   BarElement,
   Filler
 } from 'chart.js';
-import './AdminDashboard.css';
+// Removed CSS import
 import { loadApiBaseUrl } from '../../config';
 
 // Import all the new components
 import AppHeader from './components/AppHeader';
 import SideDrawer from './components/SideDrawer';
-import TabNavigation from './components/TabNavigation';
 import UsersControlBar from './components/UsersControlBar';
 import UsersTable from './components/UsersTable';
 import StatisticsControlBar from './components/StatisticsControlBar';
@@ -62,6 +62,35 @@ ChartJS.register(
   ArcElement,
   BarElement,
   Filler
+);
+
+// Helper component for common container styles
+const TabContentContainer = ({ children }) => (
+  <Box 
+    sx={{ 
+      p: 0, 
+      height: 'calc(100vh - 150px)', 
+      overflow: 'auto',
+      pr: 1,
+      '&::-webkit-scrollbar': {
+        width: '8px',
+      },
+      '&::-webkit-scrollbar-track': {
+        background: '#f1f1f1',
+        borderRadius: '4px',
+      },
+      '&::-webkit-scrollbar-thumb': {
+        background: '#c1c1c1',
+        borderRadius: '4px',
+        '&:hover': {
+          background: '#a8a8a8',
+        },
+      },
+    }}
+  >
+    {children}
+    <Box sx={{ height: '40px' }} />
+  </Box>
 );
 
 const AdminDashboard = () => {
@@ -106,6 +135,16 @@ const AdminDashboard = () => {
   const [refreshInterval, setRefreshInterval] = useState(null);
   const [selectedPeriod, setSelectedPeriod] = useState('7d');
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  // Brand Colors
+  const colors = {
+    primary: '#387ADF',
+    secondary: '#50C4ED',
+    accent: '#FBA834',
+    background: '#F9FAFB'
+  };
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -688,22 +727,37 @@ const AdminDashboard = () => {
 
   if (loading) {
     return (
-      <Box className="loading-container">
-        <CircularProgress size={60} thickness={4} />
-        <Typography variant="h6" mt={2}>Loading users data...</Typography>
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        flexDirection: 'column',
+        bgcolor: colors.background
+      }}>
+        <CircularProgress size={60} thickness={4} sx={{ color: colors.primary }} />
+        <Typography variant="h6" mt={2} sx={{ color: '#666' }}>Loading users data...</Typography>
       </Box>
     );
   }
 
+
   if (!users || Object.keys(users).length === 0) {
     return (
-      <Box className="empty-state-container">
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        flexDirection: 'column',
+        bgcolor: colors.background
+      }}>
         <Typography variant="h5" gutterBottom>No users found</Typography>
         <Button 
           variant="contained" 
-          color="primary" 
           startIcon={<AddIcon />}
           onClick={() => setShowAddUser(true)}
+          sx={{ bgcolor: colors.primary, '&:hover': { bgcolor: '#2c62b5' } }}
         >
           Add New User
         </Button>
@@ -712,7 +766,13 @@ const AdminDashboard = () => {
   }
 
   return (
-    <Box className="admin-container">
+    <Box sx={{
+      display: 'flex',
+      height: '100vh',
+      width: '100%',
+      overflow: 'hidden',
+      bgcolor: colors.background
+    }}>
       <AppHeader 
         onMenuToggle={handleMenuToggle}
         onLogout={handleLogout}
@@ -725,38 +785,29 @@ const AdminDashboard = () => {
         onTabChange={handleTabChange}
       />
 
-      <Box component="main" className="main-content">
-        <Box className="content-wrapper">
-          <TabNavigation 
-            currentTab={currentTab}
-            onTabChange={handleTabChange}
-          />
-
+      <Box component="main" sx={{
+        flexGrow: 1,
+        px: { xs: 1, md: 3 },
+        pb: { xs: 1, md: 3 },
+        width: '100%',
+        height: '100vh',
+        overflow: 'visible',
+        display: 'flex',
+        flexDirection: 'column',
+        pt: '100px',
+        boxSizing: 'border-box'
+      }}>
+        <Box sx={{
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'visible',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
           {/* Users Tab Content */}
           {currentTab === 'users' && (
-            <Box 
-              className="statistics-container"
-              sx={{ 
-                p: 0, 
-                height: 'calc(100vh - 200px)', 
-                overflow: 'auto',
-                paddingRight: '8px',
-                '&::-webkit-scrollbar': {
-                  width: '8px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: '#f1f1f1',
-                  borderRadius: '4px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#c1c1c1',
-                  borderRadius: '4px',
-                  '&:hover': {
-                    background: '#a8a8a8',
-                  },
-                },
-              }}
-            >
+            <TabContentContainer>
               <UsersControlBar 
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
@@ -766,8 +817,6 @@ const AdminDashboard = () => {
                 isRefreshing={usersLoading}
               />
 
-
-
               <UsersTable 
                 users={users}
                 sortConfig={sortConfig}
@@ -775,36 +824,12 @@ const AdminDashboard = () => {
                 onContextMenu={handleContextMenu}
                 filteredUsers={filteredUsers}
               />
-              
-              {/* Bottom padding for better scrolling */}
-              <Box sx={{ height: '40px' }} />
-            </Box>
+            </TabContentContainer>
           )}
 
           {/* Statistics Tab Content */}
           {currentTab === 'statistics' && (
-            <Box 
-              className="statistics-container"
-              sx={{ 
-                p: 0, 
-                height: 'calc(100vh - 200px)', 
-                overflow: 'auto',
-                paddingRight: '8px',
-                '&::-webkit-scrollbar': {
-                  width: '8px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: '#f1f1f1',
-                  borderRadius: '4px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#c1c1c1',
-                  borderRadius: '4px',
-                  '&:hover': {
-                    background: '#a8a8a8',
-                  },
-                },
-              }}>
+            <TabContentContainer>
               <StatisticsControlBar 
                 autoRefresh={autoRefresh}
                 onAutoRefreshChange={setAutoRefresh}
@@ -858,36 +883,12 @@ const AdminDashboard = () => {
                    <TopUsersLeaderboard usageStats={usageStats} />
                  </Grid>
                </Grid>
-               
-               {/* Bottom padding for better scrolling */}
-               <Box sx={{ height: '40px' }} />
-             </Box>
+             </TabContentContainer>
            )}
 
           {/* API Usage Tab Content */}
           {currentTab === 'api-usage' && (
-            <Box
-              className="statistics-container"
-              sx={{
-                p: 0,
-                height: 'calc(100vh - 200px)',
-                overflow: 'auto',
-                paddingRight: '8px',
-                '&::-webkit-scrollbar': {
-                  width: '8px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: '#f1f1f1',
-                  borderRadius: '4px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#c1c1c1',
-                  borderRadius: '4px',
-                  '&:hover': {
-                    background: '#a8a8a8',
-                  },
-                },
-              }}>
+            <TabContentContainer>
               <StatisticsControlBar
                 autoRefresh={autoRefresh}
                 onAutoRefreshChange={setAutoRefresh}
@@ -903,74 +904,21 @@ const AdminDashboard = () => {
                 isLoading={apiUsageStatsLoading}
                 apiStats={apiUsageStats}
               />
-
-              {/* Bottom padding for better scrolling */}
-              <Box sx={{ height: '40px' }} />
-            </Box>
+            </TabContentContainer>
           )}
 
           {/* Settings Tab Content */}
           {currentTab === 'settings' && (
-            <Box
-              className="statistics-container"
-              sx={{
-                p: 0,
-                height: 'calc(100vh - 200px)',
-                overflow: 'auto',
-                paddingRight: '8px',
-                '&::-webkit-scrollbar': {
-                  width: '8px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: '#f1f1f1',
-                  borderRadius: '4px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#c1c1c1',
-                  borderRadius: '4px',
-                  '&:hover': {
-                    background: '#a8a8a8',
-                  },
-                },
-              }}
-            >
+            <TabContentContainer>
               <SettingsTab />
-
-              {/* Bottom padding for better scrolling */}
-              <Box sx={{ height: '40px' }} />
-            </Box>
+            </TabContentContainer>
           )}
 
           {/* Database Tab Content */}
           {currentTab === 'database' && (
-            <Box
-              className="statistics-container"
-              sx={{
-                p: 0,
-                height: 'calc(100vh - 200px)',
-                overflow: 'auto',
-                paddingRight: '8px',
-                '&::-webkit-scrollbar': {
-                  width: '8px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  background: '#f1f1f1',
-                  borderRadius: '4px',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: '#c1c1c1',
-                  borderRadius: '4px',
-                  '&:hover': {
-                    background: '#a8a8a8',
-                  },
-                },
-              }}
-            >
+            <TabContentContainer>
               <FirebaseStructureTab />
-
-              {/* Bottom padding for better scrolling */}
-              <Box sx={{ height: '40px' }} />
-            </Box>
+            </TabContentContainer>
           )}
         </Box>
       </Box>
@@ -1006,4 +954,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;

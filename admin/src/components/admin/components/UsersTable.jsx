@@ -22,7 +22,7 @@ import {
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
   CheckCircle as CheckCircleIcon,
-  Cancel as CancelCircleIcon
+  Cancel as CancelIcon // Changed from CancelCircleIcon to correct name if needed, assuming CancelIcon exists in material
 } from '@mui/icons-material';
 
 const UsersTable = ({ 
@@ -42,7 +42,7 @@ const UsersTable = ({
       />
     ) : (
       <Chip 
-        icon={<CancelCircleIcon />} 
+        icon={<CancelIcon />} 
         label="Offline" 
         color="error" 
         size="small" 
@@ -56,11 +56,12 @@ const UsersTable = ({
         label="Premium" 
         color="primary" 
         size="small" 
+        sx={{ bgcolor: '#387ADF' }}
       />
     ) : (
       <Chip 
         label="Free" 
-        color="default" 
+        variant="outlined"
         size="small" 
       />
     );
@@ -74,36 +75,35 @@ const UsersTable = ({
 
   return (
     <Card 
+      elevation={0}
       sx={{ 
         borderRadius: 3,
         background: 'white',
-        boxShadow: '0 8px 32px rgba(56, 122, 223, 0.15)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+        border: '1px solid #eee',
         overflow: 'hidden'
       }}
     >
       <CardContent sx={{ p: 0 }}>
-        <Box sx={{ p: 3, borderBottom: '1px solid #e0e0e0' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+        <Box sx={{ p: 3, borderBottom: '1px solid #f0f0f0', bgcolor: '#fff' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
             <Typography 
               variant="h6" 
               sx={{ 
-                fontWeight: 600,
-                background: 'linear-gradient(135deg, #387ADF 0%, #50C4ED 100%)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
+                fontWeight: 700,
+                color: '#333'
               }}
             >
-              📋 Users Directory
+              Users Directory
             </Typography>
             <Chip 
-              label={`${filteredUsers.length} users found`}
+              label={`${filteredUsers.length} users`}
               size="small"
               sx={{
-                background: 'linear-gradient(135deg, #387ADF 0%, #50C4ED 100%)',
-                color: 'white',
-                fontWeight: 600
+                bgcolor: '#387ADF15',
+                color: '#387ADF',
+                fontWeight: 600,
+                borderRadius: 2
               }}
             />
           </Box>
@@ -117,122 +117,48 @@ const UsersTable = ({
             maxHeight: 'calc(100vh - 300px)',
             overflowY: 'auto',
             overflowX: 'hidden',
-            '&::-webkit-scrollbar': {
-              width: '8px',
-            },
-            '&::-webkit-scrollbar-track': {
-              background: '#f1f1f1',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: '#c1c1c1',
-              borderRadius: '4px',
-              '&:hover': {
-                background: '#a8a8a8',
-              },
-            },
           }}
         >
-          <Table size="small" stickyHeader className="enhanced-table">
+          <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f8f9fa', borderBottom: '2px solid #e0e0e0' }}>
-                  <Box 
-                    display="flex" 
-                    alignItems="center" 
-                    sx={{ cursor: 'pointer', '&:hover': { color: '#387ADF' } }}
-                    onClick={() => onSort('userId')}
+                {[
+                  { key: 'userId', label: 'User ID', icon: <PersonIcon sx={{ fontSize: 16 }} /> },
+                  { key: 'accountType', label: 'Type', icon: <StarIcon sx={{ fontSize: 16 }} /> },
+                  { key: 'email', label: 'Email', icon: <EmailIcon sx={{ fontSize: 16 }} /> },
+                  { key: 'language', label: 'Language', icon: <LanguageIcon sx={{ fontSize: 16 }} /> },
+                  { key: 'translator', label: 'Translator', icon: <TranslateIcon sx={{ fontSize: 16 }} /> },
+                  { key: 'createdAt', label: 'Created', icon: <AccessTimeIcon sx={{ fontSize: 16 }} /> },
+                  { key: 'lastLoginDate', label: 'Last Login', icon: <AccessTimeIcon sx={{ fontSize: 16 }} /> }
+                ].map((col) => (
+                  <TableCell 
+                    key={col.key}
+                    sx={{ 
+                      fontWeight: 600, 
+                      backgroundColor: '#f9fafb', 
+                      borderBottom: '1px solid #eee',
+                      color: '#555',
+                      py: 2
+                    }}
                   >
-                    <PersonIcon sx={{ mr: 1, fontSize: 18, color: '#387ADF' }} />
-                    User ID
-                    {sortConfig.key === 'userId' && (
-                      sortConfig.direction === 'asc' ? <ArrowUpwardIcon fontSize="small" sx={{ ml: 0.5 }} /> : <ArrowDownwardIcon fontSize="small" sx={{ ml: 0.5 }} />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f8f9fa', borderBottom: '2px solid #e0e0e0' }}>
-                  <Box 
-                    display="flex" 
-                    alignItems="center" 
-                    sx={{ cursor: 'pointer', '&:hover': { color: '#387ADF' } }}
-                    onClick={() => onSort('accountType')}
-                  >
-                    <StarIcon sx={{ mr: 1, fontSize: 18, color: '#FBA834' }} />
-                    Account Type
-                    {sortConfig.key === 'accountType' && (
-                      sortConfig.direction === 'asc' ? <ArrowUpwardIcon fontSize="small" sx={{ ml: 0.5 }} /> : <ArrowDownwardIcon fontSize="small" sx={{ ml: 0.5 }} />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f8f9fa', borderBottom: '2px solid #e0e0e0' }}>
-                  <Box 
-                    display="flex" 
-                    alignItems="center" 
-                    sx={{ cursor: 'pointer', '&:hover': { color: '#387ADF' } }}
-                    onClick={() => onSort('email')}
-                  >
-                    <EmailIcon sx={{ mr: 1, fontSize: 18, color: '#387ADF' }} />
-                    Email
-                    {sortConfig.key === 'email' && (
-                      sortConfig.direction === 'asc' ? <ArrowUpwardIcon fontSize="small" sx={{ ml: 0.5 }} /> : <ArrowDownwardIcon fontSize="small" sx={{ ml: 0.5 }} />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f8f9fa', borderBottom: '2px solid #e0e0e0' }}>
-                  <Box 
-                    display="flex" 
-                    alignItems="center" 
-                    sx={{ cursor: 'pointer', '&:hover': { color: '#387ADF' } }}
-                    onClick={() => onSort('language')}
-                  >
-                    <LanguageIcon sx={{ mr: 1, fontSize: 18, color: '#9c27b0' }} />
-                    Language
-                    {sortConfig.key === 'language' && (
-                      sortConfig.direction === 'asc' ? <ArrowUpwardIcon fontSize="small" sx={{ ml: 0.5 }} /> : <ArrowDownwardIcon fontSize="small" sx={{ ml: 0.5 }} />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f8f9fa', borderBottom: '2px solid #e0e0e0' }}>
-                  <Box 
-                    display="flex" 
-                    alignItems="center" 
-                    sx={{ cursor: 'pointer', '&:hover': { color: '#387ADF' } }}
-                    onClick={() => onSort('translator')}
-                  >
-                    <TranslateIcon sx={{ mr: 1, fontSize: 18, color: '#ff9800' }} />
-                    Translator
-                    {sortConfig.key === 'translator' && (
-                      sortConfig.direction === 'asc' ? <ArrowUpwardIcon fontSize="small" sx={{ ml: 0.5 }} /> : <ArrowDownwardIcon fontSize="small" sx={{ ml: 0.5 }} />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f8f9fa', borderBottom: '2px solid #e0e0e0' }}>
-                  <Box 
-                    display="flex" 
-                    alignItems="center" 
-                    sx={{ cursor: 'pointer', '&:hover': { color: '#387ADF' } }}
-                    onClick={() => onSort('createdAt')}
-                  >
-                    <AccessTimeIcon sx={{ mr: 1, fontSize: 18, color: '#607d8b' }} />
-                    Created At
-                    {sortConfig.key === 'createdAt' && (
-                      sortConfig.direction === 'asc' ? <ArrowUpwardIcon fontSize="small" sx={{ ml: 0.5 }} /> : <ArrowDownwardIcon fontSize="small" sx={{ ml: 0.5 }} />
-                    )}
-                  </Box>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 600, backgroundColor: '#f8f9fa', borderBottom: '2px solid #e0e0e0' }}>
-                  <Box 
-                    display="flex" 
-                    alignItems="center" 
-                    sx={{ cursor: 'pointer', '&:hover': { color: '#387ADF' } }}
-                    onClick={() => onSort('lastLoginDate')}
-                  >
-                    <AccessTimeIcon sx={{ mr: 1, fontSize: 18, color: '#607d8b' }} />
-                    Last Login
-                    {sortConfig.key === 'lastLoginDate' && (
-                      sortConfig.direction === 'asc' ? <ArrowUpwardIcon fontSize="small" sx={{ ml: 0.5 }} /> : <ArrowDownwardIcon fontSize="small" sx={{ ml: 0.5 }} />
-                    )}
-                  </Box>
-                </TableCell>
+                    <Box 
+                      display="flex" 
+                      alignItems="center" 
+                      sx={{ 
+                        cursor: 'pointer', 
+                        gap: 1,
+                        '&:hover': { color: '#387ADF' } 
+                      }}
+                      onClick={() => onSort(col.key)}
+                    >
+                      {col.icon}
+                      {col.label}
+                      {sortConfig.key === col.key && (
+                        sortConfig.direction === 'asc' ? <ArrowUpwardIcon fontSize="small" /> : <ArrowDownwardIcon fontSize="small" />
+                      )}
+                    </Box>
+                  </TableCell>
+                ))}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -244,58 +170,47 @@ const UsersTable = ({
                   sx={{ 
                     cursor: 'context-menu',
                     transition: 'all 0.2s ease',
-                    '&:nth-of-type(odd)': {
-                      backgroundColor: '#fafafa'
-                    },
                     '&:hover': {
-                      backgroundColor: 'rgba(56, 122, 223, 0.08)',
-                      transform: 'translateX(4px)',
-                      boxShadow: '0 2px 8px rgba(56, 122, 223, 0.15)',
+                      backgroundColor: '#f8f9fa !important',
                     }
                   }}
                 >
-                  <TableCell>{userId}</TableCell>
+                  <TableCell sx={{ color: '#555', fontWeight: 500 }}>{userId}</TableCell>
                   <TableCell>
                     {getAccountTypeChip(user.accountType)}
                   </TableCell>
                   <TableCell>
                     <Box display="flex" alignItems="center">
-                      <EmailIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                      {user.email}
+                      <Typography variant="body2">{user.email}</Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Box display="flex" alignItems="center">
-                      <LanguageIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                      {user.language}
-                    </Box>
+                    <Chip 
+                      label={user.language || 'N/A'} 
+                      size="small" 
+                      sx={{ bgcolor: '#f0f0f0', borderRadius: 1 }} 
+                    />
                   </TableCell>
                   <TableCell>
-                    <Box display="flex" alignItems="center">
-                      <TranslateIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                      {user.translator}
-                    </Box>
+                    <Typography variant="body2" color="textSecondary">{user.translator || 'N/A'}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Box display="flex" alignItems="center">
-                      <AccessTimeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                      {formatDate(user.createdAt)}
-                    </Box>
+                    <Typography variant="caption" color="textSecondary">{formatDate(user.createdAt)}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Box display="flex" alignItems="center">
-                      <AccessTimeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                      {formatDate(user.lastLoginDate)}
-                    </Box>
+                    <Typography variant="caption" color="textSecondary">{formatDate(user.lastLoginDate)}</Typography>
                   </TableCell>
                 </TableRow>
               ))}
               {filteredUsers.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
-                    <Typography variant="body2" color="textSecondary">
-                      No users found matching your search
-                    </Typography>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.6 }}>
+                      <PersonIcon sx={{ fontSize: 48, mb: 1, color: '#ccc' }} />
+                      <Typography variant="body1" color="textSecondary">
+                        No users found matching your search
+                      </Typography>
+                    </Box>
                   </TableCell>
                 </TableRow>
               )}
@@ -307,4 +222,4 @@ const UsersTable = ({
   );
 };
 
-export default UsersTable; 
+export default UsersTable;

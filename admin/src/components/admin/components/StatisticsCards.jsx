@@ -91,18 +91,18 @@ const StatisticsCards = ({ usageStats, selectedPeriod }) => {
       {statsData.map((stat, index) => (
         <Grid item xs={12} sm={6} md={3} key={index}>
           <Card 
-            className="stats-card"
+            elevation={0}
             sx={{ 
               height: '100%',
               borderRadius: 3,
               background: 'white',
               boxShadow: `0 8px 32px ${stat.shadowColor}`,
               border: '1px solid rgba(255, 255, 255, 0.2)',
-              transition: 'all 0.3s ease',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               position: 'relative',
               overflow: 'hidden',
               '&:hover': {
-                transform: 'translateY(-8px)',
+                transform: 'translateY(-8px) scale(1.02)',
                 boxShadow: `0 16px 48px ${stat.shadowColor}`,
               },
               '&::before': {
@@ -176,4 +176,4 @@ const StatisticsCards = ({ usageStats, selectedPeriod }) => {
   );
 };
 
-export default StatisticsCards; 
+export default StatisticsCards;

@@ -43,11 +43,12 @@ const TopUsersLeaderboard = ({ usageStats }) => {
 
   return (
     <Card 
+      elevation={0}
       sx={{ 
         borderRadius: 3,
         background: 'white',
-        boxShadow: '0 8px 32px rgba(108, 117, 125, 0.15)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+        border: '1px solid #eee',
         minHeight: '400px',
         display: 'flex',
         flexDirection: 'column'
@@ -65,7 +66,8 @@ const TopUsersLeaderboard = ({ usageStats }) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                mr: 2
+                mr: 2,
+                boxShadow: '0 4px 10px rgba(108, 117, 125, 0.3)'
               }}
             >
               <StarIcon sx={{ color: 'white', fontSize: 20 }} />
@@ -74,14 +76,11 @@ const TopUsersLeaderboard = ({ usageStats }) => {
               <Typography 
                 variant="h6" 
                 sx={{ 
-                  fontWeight: 600,
-                  background: 'linear-gradient(135deg, #6c757d 0%, #495057 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  fontWeight: 700,
+                  color: '#333'
                 }}
               >
-                🏆 Top Active Users
+                Top Active Users
               </Typography>
               <Typography variant="caption" color="textSecondary">
                 Most frequent users in the last 7 days
@@ -93,9 +92,10 @@ const TopUsersLeaderboard = ({ usageStats }) => {
             label={`Top ${Math.min(10, rankedUsers.length)}`}
             size="small"
             sx={{
-              background: 'linear-gradient(135deg, #6c757d 0%, #495057 100%)',
-              color: 'white',
-              fontWeight: 600
+              background: '#f8f9fa',
+              color: '#666',
+              fontWeight: 600,
+              border: '1px solid #eee'
             }}
           />
         </Box>
@@ -106,17 +106,17 @@ const TopUsersLeaderboard = ({ usageStats }) => {
               {rankedUsers.map((user, index) => (
                 <Grid item xs={12} sm={6} md={4} lg={2.4} key={index}>
                   <Card 
-                    className="leaderboard-card"
+                    elevation={0}
                     sx={{ 
                       borderRadius: 2,
                       background: index < 3 ? 
                         (index === 0 ? 'linear-gradient(135deg, #FBA834 0%, #ff9800 100%)' :
                          index === 1 ? 'linear-gradient(135deg, #c0c0c0 0%, #a8a8a8 100%)' :
                          'linear-gradient(135deg, #cd7f32 0%, #b8860b 100%)') :
-                        'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                        '#f8f9fa',
                       color: index < 3 ? 'white' : 'inherit',
                       border: index < 3 ? 'none' : '1px solid #e0e0e0',
-                      transition: 'all 0.3s ease',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       position: 'relative',
                       overflow: 'hidden',
                       height: '160px', // Fixed height for consistent sizing
@@ -125,8 +125,8 @@ const TopUsersLeaderboard = ({ usageStats }) => {
                       '&:hover': {
                         transform: 'translateY(-4px)',
                         boxShadow: index < 3 ? 
-                          '0 8px 25px rgba(251, 168, 52, 0.3)' : 
-                          '0 8px 25px rgba(0, 0, 0, 0.1)',
+                          '0 12px 25px rgba(251, 168, 52, 0.3)' : 
+                          '0 4px 12px rgba(0, 0, 0, 0.08)',
                       },
                       '&::before': index < 3 ? {
                         content: '""',
@@ -135,16 +135,12 @@ const TopUsersLeaderboard = ({ usageStats }) => {
                         left: 0,
                         right: 0,
                         bottom: 0,
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        opacity: 0,
-                        transition: 'opacity 0.3s ease',
-                      } : {},
-                      '&:hover::before': index < 3 ? {
-                        opacity: 1,
+                        background: 'linear-gradient(45deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%)',
+                        zIndex: 1
                       } : {}
                     }}
                   >
-                    <CardContent sx={{ p: 2, textAlign: 'center', position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <CardContent sx={{ p: 2, textAlign: 'center', position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', zIndex: 2 }}>
                       {/* Rank Badge */}
                       <Box 
                         sx={{ 
@@ -154,15 +150,15 @@ const TopUsersLeaderboard = ({ usageStats }) => {
                           width: 32,
                           height: 32,
                           borderRadius: '50%',
-                          background: index < 3 ? 'rgba(255, 255, 255, 0.2)' : '#6c757d',
+                          background: index < 3 ? 'rgba(255, 255, 255, 0.2)' : '#fff',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          color: 'white',
+                          color: index < 3 ? 'white' : '#666',
                           fontWeight: 'bold',
                           fontSize: '0.8rem',
-                          border: '2px solid white',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                          border: index < 3 ? '2px solid rgba(255,255,255,0.3)' : '1px solid #e0e0e0',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                         }}
                       >
                         #{index + 1}
@@ -174,8 +170,8 @@ const TopUsersLeaderboard = ({ usageStats }) => {
                           <StarIcon 
                             sx={{ 
                               fontSize: 20, 
-                              color: 'rgba(255, 255, 255, 0.9)',
-                              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2))'
+                              color: 'white',
+                              filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.2))'
                             }} 
                           />
                         </Box>
@@ -189,9 +185,9 @@ const TopUsersLeaderboard = ({ usageStats }) => {
                             width: 50,
                             height: 50,
                             margin: '0 auto',
-                            border: '3px solid rgba(255, 255, 255, 0.3)',
-                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                            bgcolor: index < 3 ? 'rgba(255, 255, 255, 0.2)' : '#387ADF'
+                            border: index < 3 ? '3px solid rgba(255,255,255,0.4)' : '3px solid white',
+                            boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                            bgcolor: index < 3 ? 'rgba(255,255,255,0.2)' : '#387ADF'
                           }}
                         >
                           {!user.profileImageUrl || user.profileImageUrl === 'none' ? (
@@ -238,7 +234,8 @@ const TopUsersLeaderboard = ({ usageStats }) => {
                               fontSize: '0.65rem',
                               height: 20,
                               fontWeight: 600,
-                              border: index < 3 ? '1px solid rgba(255, 255, 255, 0.3)' : 'none'
+                              border: index < 3 ? '1px solid rgba(255, 255, 255, 0.3)' : 'none',
+                              backdropFilter: 'blur(4px)'
                             }}
                           />
                         </Box>
@@ -262,4 +259,4 @@ const TopUsersLeaderboard = ({ usageStats }) => {
   );
 };
 
-export default TopUsersLeaderboard; 
+export default TopUsersLeaderboard;

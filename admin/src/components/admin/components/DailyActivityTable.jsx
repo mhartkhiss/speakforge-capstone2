@@ -24,6 +24,7 @@ import {
 const DailyActivityTable = ({ usageStats, onViewDetails }) => {
   return (
     <Card 
+      elevation={0}
       sx={{ 
         borderRadius: 3,
         background: 'white',
@@ -101,7 +102,7 @@ const DailyActivityTable = ({ usageStats, onViewDetails }) => {
         }}>
           {usageStats.dailyLoginUsage && usageStats.dailyLoginUsage.length > 0 ? (
             <TableContainer>
-              <Table size="small" stickyHeader className="enhanced-table">
+              <Table size="small" stickyHeader>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600, backgroundColor: '#f8f9fa' }}>Date</TableCell>
@@ -144,11 +145,15 @@ const DailyActivityTable = ({ usageStats, onViewDetails }) => {
                             <Chip 
                               label={day.count}
                               size="small"
-                              className="trend-chip"
                               sx={{
                                 background: day.count > 0 ? 'linear-gradient(135deg, #50C4ED 0%, #387ADF 100%)' : '#e0e0e0',
                                 color: 'white',
-                                fontWeight: 600
+                                fontWeight: 600,
+                                borderRadius: '12px',
+                                transition: 'all 0.3s ease',
+                                '&:hover': {
+                                  transform: 'scale(1.05)'
+                                }
                               }}
                             />
                           </TableCell>
@@ -216,4 +221,4 @@ const DailyActivityTable = ({ usageStats, onViewDetails }) => {
   );
 };
 
-export default DailyActivityTable; 
+export default DailyActivityTable;

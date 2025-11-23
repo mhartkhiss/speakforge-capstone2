@@ -34,7 +34,6 @@ const LoginTrendChart = ({ usageStats, chartType, onChartTypeChange, selectedPer
     }
 
     // Sort the data by date to ensure chronological order (oldest to newest)
-    // This ensures the latest date appears on the right side of the chart
     const sortedData = [...usageStats.dailyLoginUsage].sort((a, b) => 
       new Date(a.date) - new Date(b.date)
     );
@@ -156,6 +155,7 @@ const LoginTrendChart = ({ usageStats, chartType, onChartTypeChange, selectedPer
 
   return (
     <Card 
+      elevation={0}
       sx={{ 
         borderRadius: 3,
         background: 'white',
@@ -202,16 +202,18 @@ const LoginTrendChart = ({ usageStats, chartType, onChartTypeChange, selectedPer
             exclusive
             onChange={(event, newType) => newType && onChartTypeChange(newType)}
             size="small"
-            className="chart-toggle"
             sx={{ 
               '& .MuiToggleButton-root': {
                 borderRadius: 2,
                 px: 2,
                 py: 0.5,
                 fontSize: '0.75rem',
+                border: '1px solid #e0e0e0',
+                margin: '0 2px',
                 '&.Mui-selected': {
                   background: 'linear-gradient(135deg, #387ADF 0%, #50C4ED 100%)',
                   color: 'white',
+                  border: '1px solid #387ADF',
                   '&:hover': {
                     background: 'linear-gradient(135deg, #2c5aa0 0%, #3a9bc1 100%)',
                   }
@@ -230,7 +232,19 @@ const LoginTrendChart = ({ usageStats, chartType, onChartTypeChange, selectedPer
           </ToggleButtonGroup>
         </Box>
         
-        <Box sx={{ flex: 1, height: '400px', position: 'relative' }} className="chart-container">
+        <Box 
+          sx={{ 
+            flex: 1, 
+            height: '400px', 
+            position: 'relative',
+            '& canvas': {
+              transition: 'all 0.3s ease',
+            },
+            '&:hover canvas': {
+               transform: 'scale(1.01)',
+            }
+          }} 
+        >
           {isLoading ? (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column' }}>
               <CircularProgress size={40} sx={{ color: '#387ADF', mb: 2 }} />
@@ -258,4 +272,4 @@ const LoginTrendChart = ({ usageStats, chartType, onChartTypeChange, selectedPer
   );
 };
 
-export default LoginTrendChart; 
+export default LoginTrendChart;

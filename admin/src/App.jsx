@@ -3,11 +3,13 @@ import AdminLogin from './components/admin/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 
+import LandingPage from './components/LandingPage';
+
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/admin/login" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route
           path="/admin"
