@@ -9,11 +9,11 @@ import {
   useTheme,
   Container
 } from '@mui/material';
+import logo from '../../../assets/speakforgelogo_light.png';
 import {
   Menu as MenuIcon,
   Logout as LogoutIcon,
-  Person as PersonIcon,
-  AdminPanelSettings as AdminIcon
+  Person as PersonIcon
 } from '@mui/icons-material';
 
 const AppHeader = ({ onMenuToggle, onLogout }) => {
@@ -50,28 +50,28 @@ const AppHeader = ({ onMenuToggle, onLogout }) => {
           </IconButton>
           
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
-            <Box 
-              sx={{ 
-                bgcolor: 'rgba(255,255,255,0.2)', 
-                p: 0.5, 
-                borderRadius: 1, 
+            <Box
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                p: 0.5,
+                borderRadius: 1,
                 mr: 1.5,
                 display: 'flex'
               }}
             >
-              <AdminIcon sx={{ color: colors.white }} />
+              <Box component="img" src={logo} alt="SpeakForge Logo" sx={{ height: 28, width: 28 }} />
             </Box>
-            <Typography 
-              variant="h6" 
-              noWrap 
-              component="div" 
-              sx={{ 
-                fontWeight: 700, 
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                fontWeight: 700,
                 letterSpacing: 0.5,
-                textShadow: '0 2px 4px rgba(0,0,0,0.1)' 
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)'
               }}
             >
-              SpeakForge <Typography component="span" variant="h6" sx={{ fontWeight: 300, opacity: 0.9 }}>Admin</Typography>
+              <Box component="span" sx={{ color: colors.accent }}>Speak</Box><Box component="span" sx={{ color: colors.white }}>Forge</Box> <Typography component="span" variant="h6" sx={{ fontWeight: 300, opacity: 0.9 }}>Admin</Typography>
             </Typography>
           </Box>
 

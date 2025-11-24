@@ -20,9 +20,9 @@ import {
   Email as EmailIcon,
   Lock as LockIcon,
   Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-  AdminPanelSettings as AdminIcon
+  VisibilityOff as VisibilityOffIcon
 } from '@mui/icons-material';
+import logo from '../../assets/speakforgelogo_light.png';
 import { loadApiBaseUrl } from '../../config';
 // import './AdminLogin.css'; // Removing CSS file import to use sx props
 
@@ -148,19 +148,19 @@ const AdminLogin = () => {
           }}
         >
           <Box sx={{ p: 4, textAlign: 'center', bgcolor: 'transparent' }}>
-            <Box sx={{ 
-              width: 80, 
-              height: 80, 
-              mx: 'auto', 
-              mb: 2, 
-              display: 'flex', 
-              alignItems: 'center', 
+            <Box sx={{
+              width: 80,
+              height: 80,
+              mx: 'auto',
+              mb: 2,
+              display: 'flex',
+              alignItems: 'center',
               justifyContent: 'center',
               bgcolor: `${colors.primary}15`,
               borderRadius: '50%',
               color: colors.primary
             }}>
-              <AdminIcon sx={{ fontSize: 40 }} />
+              <Box component="img" src={logo} alt="SpeakForge Logo" sx={{ width: 50, height: 50 }} />
             </Box>
             
             <Typography variant="h5" component="h1" sx={{ fontWeight: 800, color: colors.dark, mb: 1 }}>
