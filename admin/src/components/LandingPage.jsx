@@ -18,6 +18,8 @@ import {
   Stack
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { getDatabase, ref, get } from 'firebase/database';
+import app from '../firebase';
 import logo from '../assets/speakforgelogo_light.png';
 import TranslateIcon from '@mui/icons-material/Translate';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
@@ -46,6 +48,7 @@ const LandingPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const downloadSectionRef = useRef(null);
   const [scrolled, setScrolled] = useState(false);
+  const [apkDownloadUrl, setApkDownloadUrl] = useState('');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +56,30 @@ const LandingPage = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const loadApkDownloadUrl = async () => {
+      try {
+        const db = getDatabase(app);
+        const settingsRef = ref(db, 'settings');
+
+        const snapshot = await get(settingsRef);
+        if (snapshot.exists()) {
+          const settings = snapshot.val();
+          const url = settings.apkDownloadUrl;
+          if (url) {
+            setApkDownloadUrl(url);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading APK download URL from Firebase:', error);
+        // Fallback to hardcoded URL if Firebase fails
+        setApkDownloadUrl('https://drive.google.com/file/d/1DH0Zmn5EIG5GUmrsdrhY-8ub2JQlIVSY/view?usp=drive_link');
+      }
+    };
+
+    loadApkDownloadUrl();
   }, []);
 
   const handleGetStarted = () => {
@@ -687,8 +714,9 @@ const LandingPage = () => {
                 variant="contained"
                 size="large"
                 startIcon={<DownloadIcon />}
-                href="https://drive.google.com/file/d/1DH0Zmn5EIG5GUmrsdrhY-8ub2JQlIVSY/view?usp=drive_link"
+                href={apkDownloadUrl || 'https://drive.google.com/file/d/1DH0Zmn5EIG5GUmrsdrhY-8ub2JQlIVSY/view?usp=drive_link'}
                 target="_blank"
+                disabled={!apkDownloadUrl}
                 sx={{
                   bgcolor: colors.primary,
                   color: colors.white,
@@ -703,10 +731,16 @@ const LandingPage = () => {
                     transform: 'translateY(-2px)',
                     boxShadow: '0 15px 30px rgba(37, 99, 235, 0.5)',
                   },
+                  '&:disabled': {
+                    bgcolor: '#ccc',
+                    color: '#666',
+                    transform: 'none',
+                    boxShadow: 'none'
+                  },
                   transition: 'all 0.3s'
                 }}
               >
-                Download APK
+                {apkDownloadUrl ? 'Download APK' : 'Loading...'}
               </Button>
             </Box>
 
