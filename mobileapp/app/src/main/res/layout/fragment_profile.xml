@@ -437,7 +437,7 @@
                                 android:tint="#757575"/>
                         </LinearLayout>
 
-                        <!-- QR Code Share Section -->
+                        <!-- Share SpeakForge App Section -->
                         <LinearLayout
                             android:id="@+id/btnMenuShareQR"
                             android:layout_width="match_parent"
@@ -475,6 +475,57 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Share app download link"
+                                    android:textColor="#757575"
+                                    android:textSize="14sp"
+                                    android:fontFamily="@font/poppins"/>
+                            </LinearLayout>
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/ic_chevron_right"
+                                android:tint="#757575"/>
+                        </LinearLayout>
+
+                        <!-- Take Survey Section -->
+                        <LinearLayout
+                            android:id="@+id/btnMenuTakeSurvey"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="8dp"
+                            android:background="@drawable/ripple_background"
+                            android:orientation="horizontal"
+                            android:padding="8dp"
+                            android:clickable="true"
+                            android:focusable="true">
+
+                            <ImageView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/ic_chat"
+                                android:tint="#424242"/>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:orientation="vertical"
+                                android:layout_marginStart="24dp">
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Take User Survey"
+                                    android:textColor="#212121"
+                                    android:textSize="16sp"
+                                    android:fontFamily="@font/poppins_medium"/>
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Help us improve the app"
                                     android:textColor="#757575"
                                     android:textSize="14sp"
                                     android:fontFamily="@font/poppins"/>

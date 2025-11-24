@@ -83,7 +83,7 @@ public class Languages {
     // Method to get all available languages
     public static List<String> getAllLanguages() {
         return Arrays.asList(
-            "English", "Tagalog", "Bisaya"
+            "English", "Bisaya"
         );
     }
 }

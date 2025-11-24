@@ -46,6 +46,7 @@ import TopUsersLeaderboard from './components/TopUsersLeaderboard';
 import ApiUsageStatistics from './components/ApiUsageStatistics';
 import SettingsTab from './components/SettingsTab';
 import FirebaseStructureTab from './components/FirebaseStructureTab';
+import SurveyTab from './components/SurveyTab';
 import UserDialogs from './components/UserDialogs';
 import UserContextMenu from './components/UserContextMenu';
 import NotificationSnackbar from './components/NotificationSnackbar';
@@ -904,6 +905,13 @@ const AdminDashboard = () => {
                 isLoading={apiUsageStatsLoading}
                 apiStats={apiUsageStats}
               />
+            </TabContentContainer>
+          )}
+
+          {/* Survey Tab Content */}
+          {currentTab === 'survey' && (
+            <TabContentContainer>
+              <SurveyTab />
             </TabContentContainer>
           )}
 

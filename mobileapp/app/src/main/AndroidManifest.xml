@@ -111,6 +111,10 @@
             android:screenOrientation="portrait"
             android:theme="@style/Theme.AppDev.NoActionBar"/>
         <activity
+            android:name=".activities.SurveyActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
             android:name=".SplashActivity"
             android:exported="true"
             android:screenOrientation="portrait"

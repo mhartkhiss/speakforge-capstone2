@@ -8,10 +8,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -37,22 +38,15 @@ public class LanguageSetupActivity extends AppCompatActivity {
         List<String> languages = Languages.getAllLanguages();
 
         // Create buttons dynamically
+        LayoutInflater inflater = LayoutInflater.from(this);
         for (String language : languages) {
-            Button button = new Button(this);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT
-            );
-            params.setMargins(16, 8, 16, 8);
-            button.setLayoutParams(params);
+            View languageView = inflater.inflate(R.layout.item_language_selection, buttonContainer, false);
+            TextView languageName = languageView.findViewById(R.id.languageName);
+            languageName.setText(language);
             
-            button.setText(language);
-            button.setBackgroundTintList(getColorStateList(R.color.light_blue));
-            button.setTextColor(getResources().getColor(android.R.color.black));
+            languageView.setOnClickListener(v -> updateSourceLanguage(language));
             
-            button.setOnClickListener(v -> updateSourceLanguage(language));
-            
-            buttonContainer.addView(button);
+            buttonContainer.addView(languageView);
         }
     }
 

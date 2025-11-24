@@ -15,7 +15,8 @@ import {
   IntegrationInstructions as ApiIcon,
   Settings as SettingsIcon,
   Storage as StorageIcon,
-  ChevronLeft as ChevronLeftIcon
+  ChevronLeft as ChevronLeftIcon,
+  Poll as PollIcon
 } from '@mui/icons-material';
 
 const SideDrawer = ({ open, onClose, currentTab, onTabChange }) => {
@@ -33,6 +34,7 @@ const SideDrawer = ({ open, onClose, currentTab, onTabChange }) => {
     { id: 'users', label: 'Users Management', icon: <PeopleIcon /> },
     { id: 'statistics', label: 'Usage Statistics', icon: <BarChartIcon /> },
     { id: 'api-usage', label: 'API Usage', icon: <ApiIcon /> },
+    { id: 'survey', label: 'Survey / Feedback', icon: <PollIcon /> },
     { id: 'database', label: 'Database', icon: <StorageIcon /> },
     { id: 'settings', label: 'Settings', icon: <SettingsIcon /> },
   ];

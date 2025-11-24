@@ -52,6 +52,8 @@ import java.util.HashSet;
 import java.util.Set;
 import com.example.appdev.subcontrollers.ChangeTranslatorControl;
 
+import com.example.appdev.activities.SurveyActivity;
+
 public class ProfileFragment extends Fragment {
 
     private TextView textViewUsername, textViewEmail, textViewTranslatorValue, textViewLanguageValue;
@@ -66,6 +68,7 @@ public class ProfileFragment extends Fragment {
     private LinearLayout btnMenuChangeLanguage;
     private LinearLayout btnMenuChangePassword;
     private LinearLayout btnMenuShareQR;
+    private LinearLayout btnMenuTakeSurvey;
     private LinearLayout btnMenuTranslationMode;
     private ImageButton btnTranslationModeToggle;
     private TextView textViewTranslationModeValue;
@@ -177,6 +180,7 @@ public class ProfileFragment extends Fragment {
         btnMenuChangePassword = view.findViewById(R.id.btnMenuChangePassword);
         btnMenuSelectTranslator = view.findViewById(R.id.btnMenuSelectTranslator);
         btnMenuShareQR = view.findViewById(R.id.btnMenuShareQR);
+        btnMenuTakeSurvey = view.findViewById(R.id.btnMenuTakeSurvey);
         btnMenuTranslationMode = view.findViewById(R.id.btnMenuTranslationMode);
         btnTranslationModeToggle = view.findViewById(R.id.btnTranslationModeToggle);
         textViewTranslationModeValue = view.findViewById(R.id.textViewTranslationModeValue);
@@ -331,6 +335,12 @@ public class ProfileFragment extends Fragment {
 
         if (btnMenuShareQR != null) {
             btnMenuShareQR.setOnClickListener(v -> showQRCodeDialog());
+        }
+
+        if (btnMenuTakeSurvey != null) {
+            btnMenuTakeSurvey.setOnClickListener(v -> {
+                startActivity(new Intent(requireContext(), SurveyActivity.class));
+            });
         }
 
         // Translation mode toggle
