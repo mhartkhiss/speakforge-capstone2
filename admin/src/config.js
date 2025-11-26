@@ -22,19 +22,19 @@ export const loadApiBaseUrl = async () => {
       const snapshot = await get(settingsRef);
       if (snapshot.exists()) {
         const settings = snapshot.val();
-        // Get mobile app's backend URL and convert to admin URL
         const mobileBackendUrl = settings.backendUrl;
         if (mobileBackendUrl) {
-          // Convert mobile app URL (e.g., https://api.example.com/api/) to admin URL (https://api.example.com/api/admin)
-          API_BASE_URL = mobileBackendUrl.replace(/\/$/, '') + '/admin'; // Remove trailing slash and add /admin
+          // Convert mobile app URL (e.g., https://api.example.com/api/) to base URL without /admin
+          // The components will append /admin/... where needed
+          API_BASE_URL = mobileBackendUrl.replace(/\/$/, ''); 
           console.log('Loaded API_BASE_URL from Firebase:', API_BASE_URL);
         } else {
-          API_BASE_URL = 'http://127.0.0.1:8000/api/admin'; // fallback to localhost
+          API_BASE_URL = 'http://127.0.0.1:8000/api'; // fallback to localhost
           console.log('No backendUrl in Firebase settings, using localhost fallback:', API_BASE_URL);
         }
       } else {
         // Fallback to localhost if no settings found
-        API_BASE_URL = 'http://127.0.0.1:8000/api/admin';
+        API_BASE_URL = 'http://127.0.0.1:8000/api';
         console.log('No Firebase settings found, using localhost fallback:', API_BASE_URL);
       }
 
@@ -43,7 +43,7 @@ export const loadApiBaseUrl = async () => {
     } catch (error) {
       console.error('Error loading API_BASE_URL from Firebase:', error);
       // Fallback to localhost on error
-      API_BASE_URL = 'http://127.0.0.1:8000/api/admin';
+      API_BASE_URL = 'http://127.0.0.1:8000/api';
       settingsLoaded = true;
       resolve(API_BASE_URL);
     }

@@ -33,7 +33,7 @@ const SettingsTab = () => {
       const token = localStorage.getItem('adminToken');
       const baseUrl = await loadApiBaseUrl();
 
-      const response = await fetch(`${baseUrl}/settings/`, {
+      const response = await fetch(`${baseUrl}/admin/settings/`, {
         headers: {
           'Authorization': `Token ${token}`,
           'Content-Type': 'application/json'
@@ -65,7 +65,7 @@ const SettingsTab = () => {
       const token = localStorage.getItem('adminToken');
       const baseUrl = await loadApiBaseUrl();
 
-      const response = await fetch(`${baseUrl}/settings/`, {
+      const response = await fetch(`${baseUrl}/admin/settings/`, {
         method: 'PUT',
         headers: {
           'Authorization': `Token ${token}`,

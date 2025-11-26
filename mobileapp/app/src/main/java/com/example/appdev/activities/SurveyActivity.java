@@ -1,6 +1,7 @@
 package com.example.appdev.activities;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
@@ -48,6 +49,9 @@ public class SurveyActivity extends AppCompatActivity {
     private List<Map<String, Object>> surveyQuestions = new ArrayList<>();
     // Map to store question IDs to their answer views/data
     private Map<String, Object> questionViews = new HashMap<>();
+    // Store existing response data for preview mode
+    private Map<String, Object> existingResponse = null;
+    private boolean isPreviewMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +79,48 @@ public class SurveyActivity extends AppCompatActivity {
 
     private void loadSurvey() {
         showLoading(true);
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        String userId = user != null ? user.getUid() : Variables.userUID;
+
+        if (userId == null || userId.isEmpty()) {
+            userId = "anonymous_" + System.currentTimeMillis();
+        }
+
+        // First check if user has already submitted a response
+        checkExistingResponse(userId);
+    }
+
+    private void checkExistingResponse(String userId) {
+        mDatabase.child("survey_responses").orderByChild("userId").equalTo(userId)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists() && snapshot.getChildrenCount() > 0) {
+                    // User has already submitted a response, show preview
+                    for (DataSnapshot responseSnapshot : snapshot.getChildren()) {
+                        existingResponse = (Map<String, Object>) responseSnapshot.getValue();
+                        if (existingResponse != null) {
+                            break; // Use the first response found
+                        }
+                    }
+                    loadSurveyForPreview();
+                } else {
+                    // User hasn't submitted, load survey for taking
+                    loadSurveyForTaking();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Log.e(TAG, "Error checking existing responses: " + error.getMessage());
+                // If error checking, allow taking survey anyway
+                loadSurveyForTaking();
+            }
+        });
+    }
+
+    private void loadSurveyForTaking() {
         mDatabase.child("surveys").child("active_survey").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -83,7 +129,7 @@ public class SurveyActivity extends AppCompatActivity {
                     // Load survey title and description if available
                     String title = snapshot.child("title").getValue(String.class);
                     String description = snapshot.child("description").getValue(String.class);
-                    
+
                     if (title != null) ((TextView) findViewById(R.id.tvSurveyTitle)).setText(title);
                     if (description != null) ((TextView) findViewById(R.id.tvSurveyDescription)).setText(description);
 
@@ -116,6 +162,58 @@ public class SurveyActivity extends AppCompatActivity {
                 } else {
                     // Seed the survey if it doesn't exist (First run)
                     seedInitialSurvey();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                showLoading(false);
+                Toast.makeText(SurveyActivity.this, "Failed to load survey: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void loadSurveyForPreview() {
+        mDatabase.child("surveys").child("active_survey").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                showLoading(false);
+                if (snapshot.exists()) {
+                    isPreviewMode = true;
+
+                    // Load survey title and description if available
+                    String title = snapshot.child("title").getValue(String.class);
+                    String description = snapshot.child("description").getValue(String.class);
+
+                    if (title != null) ((TextView) findViewById(R.id.tvSurveyTitle)).setText(title + " - Your Response");
+                    if (description != null) ((TextView) findViewById(R.id.tvSurveyDescription)).setText("You have already completed this survey. Here's your response:");
+
+                    // Load sections and questions in preview mode
+                    questionsContainer.removeAllViews();
+                    surveyQuestions.clear();
+                    questionViews.clear();
+
+                    if (snapshot.hasChild("sections")) {
+                        for (DataSnapshot sectionSnapshot : snapshot.child("sections").getChildren()) {
+                            String sectionTitle = sectionSnapshot.child("title").getValue(String.class);
+                            addSectionTitle(sectionTitle);
+
+                            for (DataSnapshot questionSnapshot : sectionSnapshot.child("questions").getChildren()) {
+                                Map<String, Object> question = (Map<String, Object>) questionSnapshot.getValue();
+                                if (question != null) {
+                                    // PREFER EXISTING ID, IF AVAILABLE. Fallback to key only if ID is missing.
+                                    if (!question.containsKey("id")) {
+                                        question.put("id", questionSnapshot.getKey());
+                                    }
+                                    surveyQuestions.add(question);
+                                    renderQuestionPreview(question);
+                                }
+                            }
+                        }
+                    }
+
+                    // Hide submit button in preview mode
+                    btnSubmitSurvey.setVisibility(View.GONE);
                 }
             }
 
@@ -241,28 +339,156 @@ public class SurveyActivity extends AppCompatActivity {
         questionsContainer.addView(spacer);
     }
 
+    private void renderQuestionPreview(Map<String, Object> question) {
+        String type = (String) question.get("type");
+        String text = (String) question.get("text");
+        String id = (String) question.get("id");
+        List<String> options = (List<String>) question.get("options");
+
+        // Question Text
+        TextView questionText = new TextView(this);
+        questionText.setText(text);
+        questionText.setTextSize(16);
+        questionText.setTextColor(getResources().getColor(R.color.black));
+        questionText.setPadding(0, 0, 0, 16);
+        questionsContainer.addView(questionText);
+
+        // Get user's answer for this question
+        Object userAnswer = null;
+        if (existingResponse != null && existingResponse.containsKey("answers")) {
+            Map<String, Object> answers = (Map<String, Object>) existingResponse.get("answers");
+            userAnswer = answers != null ? answers.get(id) : null;
+        }
+
+        // Display answer based on question type
+        if ("single_choice".equals(type) && options != null) {
+            for (String option : options) {
+                TextView optionView = new TextView(this);
+                optionView.setText("○ " + option);
+                optionView.setTextSize(14);
+                optionView.setPadding(32, 4, 0, 4);
+
+                if (option.equals(userAnswer)) {
+                    optionView.setText("● " + option);
+                    optionView.setTextColor(getResources().getColor(R.color.app_blue));
+                    optionView.setTypeface(null, android.graphics.Typeface.BOLD);
+                } else {
+                    optionView.setTextColor(getResources().getColor(R.color.text_gray));
+                }
+
+                questionsContainer.addView(optionView);
+            }
+
+        } else if ("multiple_choice".equals(type) && options != null && userAnswer instanceof List) {
+            List<String> selectedOptions = (List<String>) userAnswer;
+            for (String option : options) {
+                TextView optionView = new TextView(this);
+                boolean isSelected = selectedOptions != null && selectedOptions.contains(option);
+
+                if (isSelected) {
+                    optionView.setText("☑ " + option);
+                    optionView.setTextColor(getResources().getColor(R.color.app_blue));
+                    optionView.setTypeface(null, android.graphics.Typeface.BOLD);
+                } else {
+                    optionView.setText("☐ " + option);
+                    optionView.setTextColor(getResources().getColor(R.color.text_gray));
+                }
+
+                optionView.setTextSize(14);
+                optionView.setPadding(32, 4, 0, 4);
+                questionsContainer.addView(optionView);
+            }
+
+        } else if ("rating".equals(type)) {
+            // Display rating stars
+            LinearLayout ratingLayout = new LinearLayout(this);
+            ratingLayout.setOrientation(LinearLayout.HORIZONTAL);
+
+            String ratingStr = userAnswer != null ? userAnswer.toString() : "0";
+            int rating = 0;
+            try {
+                rating = Integer.parseInt(ratingStr);
+            } catch (NumberFormatException e) {
+                rating = 0;
+            }
+
+            for (int i = 1; i <= 5; i++) {
+                TextView starView = new TextView(this);
+                if (i <= rating) {
+                    starView.setText("★");
+                    starView.setTextColor(getResources().getColor(R.color.app_blue));
+                } else {
+                    starView.setText("☆");
+                    starView.setTextColor(getResources().getColor(R.color.text_gray));
+                }
+                starView.setTextSize(20);
+                starView.setPadding(4, 0, 4, 0);
+                ratingLayout.addView(starView);
+            }
+
+            TextView ratingText = new TextView(this);
+            ratingText.setText(" (" + rating + "/5)");
+            ratingText.setTextSize(14);
+            ratingText.setTextColor(getResources().getColor(R.color.app_blue));
+            ratingLayout.addView(ratingText);
+
+            questionsContainer.addView(ratingLayout);
+
+        } else if ("text".equals(type)) {
+            TextView answerView = new TextView(this);
+            String answer = userAnswer != null ? userAnswer.toString() : "No answer provided";
+            answerView.setText(answer);
+            answerView.setTextSize(14);
+            answerView.setTextColor(getResources().getColor(R.color.app_blue));
+            answerView.setBackgroundResource(android.R.drawable.edit_text);
+            answerView.setPadding(16, 16, 16, 16);
+            answerView.setMinLines(3);
+            questionsContainer.addView(answerView);
+        }
+
+        // Add spacing after question
+        View spacer = new View(this);
+        spacer.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 32));
+        questionsContainer.addView(spacer);
+    }
+
     private void submitSurvey() {
         Map<String, Object> answers = new HashMap<>();
-        
+        List<String> missingQuestions = new ArrayList<>();
+
         for (Map<String, Object> question : surveyQuestions) {
             String id = (String) question.get("id");
+            String questionText = (String) question.get("text");
+            if (id == null) continue; // Skip questions with no ID
+
             String type = (String) question.get("type");
             Object view = questionViews.get(id);
-            
-            if (view == null) continue;
+            boolean hasAnswer = false;
+
+            if (view == null) {
+                missingQuestions.add(questionText != null ? questionText : "Question " + id);
+                continue;
+            }
 
             if ("single_choice".equals(type) || "rating".equals(type)) {
-                if (!(view instanceof RadioGroup)) continue; // Type check
+                if (!(view instanceof RadioGroup)) {
+                    missingQuestions.add(questionText != null ? questionText : "Question " + id);
+                    continue;
+                }
                 RadioGroup rg = (RadioGroup) view;
                 int selectedId = rg.getCheckedRadioButtonId();
                 if (selectedId != -1) {
                     RadioButton selectedRb = rg.findViewById(selectedId);
                     if (selectedRb != null) {
                         answers.put(id, selectedRb.getText().toString());
+                        hasAnswer = true;
                     }
                 }
             } else if ("multiple_choice".equals(type)) {
-                if (!(view instanceof List)) continue; // Type check
+                if (!(view instanceof List)) {
+                    missingQuestions.add(questionText != null ? questionText : "Question " + id);
+                    continue;
+                }
                 try {
                     List<CheckBox> checkBoxes = (List<CheckBox>) view;
                     List<String> selectedOptions = new ArrayList<>();
@@ -273,24 +499,40 @@ public class SurveyActivity extends AppCompatActivity {
                     }
                     if (!selectedOptions.isEmpty()) {
                         answers.put(id, selectedOptions);
+                        hasAnswer = true;
                     }
                 } catch (ClassCastException e) {
                     Log.e(TAG, "Error casting checkbox list for question " + id, e);
+                    missingQuestions.add(questionText != null ? questionText : "Question " + id);
                 }
             } else if ("text".equals(type)) {
-                if (!(view instanceof EditText)) continue; // Type check
+                if (!(view instanceof EditText)) {
+                    missingQuestions.add(questionText != null ? questionText : "Question " + id);
+                    continue;
+                }
                 EditText et = (EditText) view;
                 String text = et.getText().toString().trim();
-                if (!text.isEmpty()) {
+                if (!TextUtils.isEmpty(text)) {
                     answers.put(id, text);
+                    hasAnswer = true;
                 }
+            }
+
+            if (!hasAnswer) {
+                missingQuestions.add(questionText != null ? questionText : "Question " + id);
             }
         }
 
-        // Basic validation: Require at least one answer? Or allow skipping.
-        // For now, allow submission even if empty, or check if empty and warn.
-        if (answers.isEmpty()) {
-            Toast.makeText(this, "Please answer at least one question.", Toast.LENGTH_SHORT).show();
+        // Validation: Require ALL questions to be answered
+        if (!missingQuestions.isEmpty()) {
+            String message = "Please answer all required questions:\n\n";
+            for (int i = 0; i < Math.min(missingQuestions.size(), 3); i++) {
+                message += "• " + missingQuestions.get(i) + "\n";
+            }
+            if (missingQuestions.size() > 3) {
+                message += "... and " + (missingQuestions.size() - 3) + " more";
+            }
+            Toast.makeText(this, message.trim(), Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -300,12 +542,21 @@ public class SurveyActivity extends AppCompatActivity {
     private void saveResponse(Map<String, Object> answers) {
         showLoading(true);
         
-        String userId = Variables.userUID;
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        // Prioritize Firebase Auth UID over global variable to ensure accuracy
+        String userId = user != null ? user.getUid() : Variables.userUID;
         String email = user != null ? user.getEmail() : (userId.equals("guest") ? "guest@speakforge.app" : "unknown");
         
+        if (userId == null || userId.isEmpty()) {
+            userId = "anonymous_" + System.currentTimeMillis();
+        }
+
+        // Create effectively final copies for use in inner class
+        final String finalUserId = userId;
+        final String finalEmail = email;
+
         // Fetch username if possible, or just store what we have
-        DatabaseReference userRef = mDatabase.child("users").child(userId);
+        DatabaseReference userRef = mDatabase.child("users").child(finalUserId);
         userRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -313,8 +564,8 @@ public class SurveyActivity extends AppCompatActivity {
                 if (username == null) username = "User";
 
                 Map<String, Object> responseData = new HashMap<>();
-                responseData.put("userId", userId);
-                responseData.put("email", email);
+                responseData.put("userId", finalUserId);
+                responseData.put("email", finalEmail);
                 responseData.put("username", username);
                 responseData.put("timestamp", System.currentTimeMillis());
                 responseData.put("date", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
@@ -339,7 +590,7 @@ public class SurveyActivity extends AppCompatActivity {
             public void onCancelled(@NonNull DatabaseError error) {
                 showLoading(false);
                 // Proceed with minimal info if user fetch fails
-                submitWithMinimalInfo(userId, email, answers);
+                submitWithMinimalInfo(finalUserId, finalEmail, answers);
             }
         });
     }

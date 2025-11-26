@@ -3,42 +3,62 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from firebase_admin import db, auth
 import datetime
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from ..models import APIUsageStats
 from django.db.models import Sum, Count, F
 from django.db.models.functions import TruncDate
 
+User = get_user_model()
+
 @api_view(['POST'])
-@permission_classes([AllowAny]) # Login endpoint itself doesn't require authentication
+@permission_classes([AllowAny])
 def admin_login(request):
     """
-    Admin login endpoint.
-    Authenticates against Django users and returns an API token.
+    Admin login endpoint using Firebase ID Token.
+    Verifies Firebase ID Token, ensures user is an admin in RTDB,
+    and issues a Django Rest Framework Token for backend API access.
     """
-    username = request.data.get('email') # Assuming email is used as username
-    password = request.data.get('password')
+    firebase_token = request.data.get('token') # Expecting Firebase ID Token now
 
-    if not username or not password:
-        return Response({'error': 'Please provide both email and password'}, status=status.HTTP_400_BAD_REQUEST)
+    if not firebase_token:
+        return Response({'error': 'Firebase token is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Authenticate user using Django's auth system
-    # Note: Ensure your AUTHENTICATION_BACKENDS support email/username login if needed
-    user = authenticate(request=request, username=username, password=password)
+    try:
+        # 1. Verify Firebase ID Token with clock skew tolerance
+        decoded_token = auth.verify_id_token(firebase_token, clock_skew_seconds=10)
+        uid = decoded_token['uid']
+        email = decoded_token.get('email')
 
-    if user is not None:
-        # Check if the user is an admin (staff)
-        if user.is_staff:
-            # Get or create a token for the user
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({'token': token.key})
-        else:
-            # User authenticated but is not an admin
-            return Response({'error': 'User is not authorized for admin access'}, status=status.HTTP_403_FORBIDDEN)
-    else:
-        # Authentication failed
-        return Response({'error': 'Invalid Credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        # 2. Check if user is an admin in Realtime Database
+        # Note: We double-check here for security, even though frontend checked it.
+        user_ref = db.reference(f'users/{uid}')
+        user_snapshot = user_ref.get()
+
+        if not user_snapshot or not user_snapshot.get('isAdmin') == True:
+             return Response({'error': 'User is not authorized for admin access'}, status=status.HTTP_403_FORBIDDEN)
+
+        # 3. Get or Create Django User to issue DRF Token
+        # We map Firebase UID to Django username or use email
+        # Strategy: Use email as username for Django user
+        if not email:
+             return Response({'error': 'Email is required in Firebase token'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user, created = User.objects.get_or_create(username=email, defaults={'email': email, 'is_staff': True, 'is_superuser': True})
+        
+        # Ensure the user is marked as staff so IsAdminUser permission works
+        if not user.is_staff:
+            user.is_staff = True
+            user.save()
+
+        # 4. Issue DRF Token
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({'token': token.key})
+
+    except Exception as e:
+        print(f"Admin Login Error: {e}")
+        return Response({'error': 'Invalid Authentication Token'}, status=status.HTTP_401_UNAUTHORIZED)
 
 @api_view(['POST'])
 @permission_classes([IsAdminUser]) # Re-enabled permission check

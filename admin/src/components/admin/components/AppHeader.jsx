@@ -16,7 +16,7 @@ import {
   Person as PersonIcon
 } from '@mui/icons-material';
 
-const AppHeader = ({ onMenuToggle, onLogout }) => {
+const AppHeader = ({ onMenuToggle, onLogout, adminEmail }) => {
   const theme = useTheme();
 
   // Brand Colors
@@ -78,7 +78,7 @@ const AppHeader = ({ onMenuToggle, onLogout }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}>
               <Typography variant="body2" sx={{ mr: 1, opacity: 0.9, fontWeight: 500 }}>
-                Administrator
+                {adminEmail || 'Administrator'}
               </Typography>
               <Avatar 
                 sx={{ 

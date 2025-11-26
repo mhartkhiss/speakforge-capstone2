@@ -201,7 +201,7 @@ const LandingPage = () => {
                     '&:hover': { bgcolor: scrolled ? `${colors.primary}10` : 'rgba(255,255,255,0.1)' }
                   }}
                 >
-                  Admin Login
+                  Login
                 </Button>
                 <Button
                   variant="contained"
@@ -707,7 +707,7 @@ const LandingPage = () => {
                 Experience SpeakForge on Mobile
               </Typography>
               <Typography variant="h6" sx={{ mb: 5, opacity: 0.8, maxWidth: '600px', mx: 'auto', fontWeight: 300, lineHeight: 1.6 }}>
-                Optimized for Android devices. Download the latest APK to experience seamless real-time translation wherever you go.
+                Help us improve the quality of life for foreigners in Cebu—download our AI language-assist app and join our feature testing today.
               </Typography>
 
               <Button

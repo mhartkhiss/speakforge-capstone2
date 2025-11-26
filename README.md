@@ -451,13 +451,6 @@ Detailed documentation for each component is available in:
 5. Open a Pull Request
 
 ---
-
-## License
-
-[Add your license information here]
-
----
-
 ## Support
 
 For more information about Firebase setup, refer to the [Firebase documentation](https://firebase.google.com/docs) or contact the project maintainer.

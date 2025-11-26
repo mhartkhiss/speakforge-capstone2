@@ -97,6 +97,7 @@ const TabContentContainer = ({ children }) => (
 const AdminDashboard = () => {
   const [users, setUsers] = useState({});
   const [loading, setLoading] = useState(true);
+  const [adminEmail, setAdminEmail] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -157,7 +158,7 @@ const AdminDashboard = () => {
         }
 
         const baseUrl = await loadApiBaseUrl();
-        const response = await fetch(`${baseUrl}/users/`, {
+        const response = await fetch(`${baseUrl}/admin/users/`, {
           headers: {
             'Authorization': `Token ${token}`
           }
@@ -180,11 +181,27 @@ const AdminDashboard = () => {
     fetchUsers();
   }, [navigate]);
 
+  // Fetch admin email from Firebase auth
+  useEffect(() => {
+    const fetchAdminEmail = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser && currentUser.email) {
+          setAdminEmail(currentUser.email);
+        }
+      } catch (error) {
+        console.error('Error fetching admin email:', error);
+      }
+    };
+
+    fetchAdminEmail();
+  }, []);
+
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem('adminToken');
       const baseUrl = await loadApiBaseUrl();
-      await fetch(`${baseUrl}/logout/`, {
+      await fetch(`${baseUrl}/admin/logout/`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${token}`
@@ -229,7 +246,7 @@ const AdminDashboard = () => {
       try {
         const token = localStorage.getItem('adminToken');
         const baseUrl = await loadApiBaseUrl();
-        const response = await fetch(`${baseUrl}/users/${userId}/`, {
+        const response = await fetch(`${baseUrl}/admin/users/${userId}/`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Token ${token}`
@@ -242,7 +259,7 @@ const AdminDashboard = () => {
         }
 
         // Refresh the users list
-        const usersResponse = await fetch(`${baseUrl}/users/`, {
+        const usersResponse = await fetch(`${baseUrl}/admin/users/`, {
           headers: {
             'Authorization': `Token ${token}`
           }
@@ -270,7 +287,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const baseUrl = await loadApiBaseUrl();
-      const response = await fetch(`${baseUrl}/users/`, {
+      const response = await fetch(`${baseUrl}/admin/users/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -363,6 +380,44 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleToggleAdmin = async (userId, isAdmin) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const baseUrl = await loadApiBaseUrl();
+      const response = await fetch(`${baseUrl}/admin/users/${userId}/`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Token ${token}`
+        },
+        body: JSON.stringify({
+          isAdmin: isAdmin
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update user role');
+      }
+
+      // Refresh the users list
+      await refreshUsers();
+      
+      setSnackbar({
+        open: true,
+        message: `User role updated to ${isAdmin ? 'Admin' : 'Standard User'} successfully`,
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      setSnackbar({
+        open: true,
+        message: 'Error updating user role: ' + error.message,
+        severity: 'error'
+      });
+    }
+  };
+
   const handleAccountTypeChange = async (event) => {
     const newAccountType = event.target.value;
     setSelectedAccountType(newAccountType);
@@ -370,7 +425,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const baseUrl = await loadApiBaseUrl();
-      const response = await fetch(`${baseUrl}/users/${selectedUser.userId}/`, {
+      const response = await fetch(`${baseUrl}/admin/users/${selectedUser.userId}/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -419,7 +474,7 @@ const AdminDashboard = () => {
       setUsageStatsLoading(true);
       const token = localStorage.getItem('adminToken');
       const baseUrl = await loadApiBaseUrl();
-      const response = await fetch(`${baseUrl}/usage/?period=${period}`, {
+      const response = await fetch(`${baseUrl}/admin/usage/?period=${period}`, {
         headers: {
           'Authorization': `Token ${token}`
         }
@@ -453,7 +508,7 @@ const AdminDashboard = () => {
       setApiUsageStatsLoading(true);
       const token = localStorage.getItem('adminToken');
       const baseUrl = await loadApiBaseUrl();
-      const response = await fetch(`${baseUrl}/api-usage/?period=${period}`, {
+      const response = await fetch(`${baseUrl}/admin/api-usage/?period=${period}`, {
         headers: {
           'Authorization': `Token ${token}`
         }
@@ -599,7 +654,7 @@ const AdminDashboard = () => {
       setUsersLoading(true);
       const token = localStorage.getItem('adminToken');
       const baseUrl = await loadApiBaseUrl();
-      const response = await fetch(`${baseUrl}/users/`, {
+      const response = await fetch(`${baseUrl}/admin/users/`, {
         headers: {
           'Authorization': `Token ${token}`
         }
@@ -774,9 +829,10 @@ const AdminDashboard = () => {
       overflow: 'hidden',
       bgcolor: colors.background
     }}>
-      <AppHeader 
+      <AppHeader
         onMenuToggle={handleMenuToggle}
         onLogout={handleLogout}
+        adminEmail={adminEmail}
       />
 
       <SideDrawer 
@@ -952,6 +1008,7 @@ const AdminDashboard = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onResetPassword={handleResetPassword}
+        onToggleAdmin={handleToggleAdmin}
       />
 
       <NotificationSnackbar 

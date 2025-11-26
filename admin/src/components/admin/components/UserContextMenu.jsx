@@ -2,12 +2,14 @@ import {
   Menu,
   MenuItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Divider
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
-  LockReset as LockResetIcon
+  LockReset as LockResetIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 
 const UserContextMenu = ({ 
@@ -15,7 +17,8 @@ const UserContextMenu = ({
   onClose, 
   onEdit, 
   onDelete, 
-  onResetPassword 
+  onResetPassword,
+  onToggleAdmin
 }) => {
   const handleAction = (action) => {
     const { userId, user } = contextMenu;
@@ -29,6 +32,9 @@ const UserContextMenu = ({
         break;
       case 'resetPassword':
         onResetPassword(user.email);
+        break;
+      case 'toggleAdmin':
+        if (onToggleAdmin) onToggleAdmin(userId, !user.isAdmin);
         break;
       default:
         break;
@@ -55,15 +61,24 @@ const UserContextMenu = ({
         </ListItemIcon>
         <ListItemText>Edit Account Type</ListItemText>
       </MenuItem>
+      <MenuItem onClick={() => handleAction('toggleAdmin')}>
+        <ListItemIcon>
+          <AdminIcon fontSize="small" />
+        </ListItemIcon>
+        <ListItemText>
+          {contextMenu.user?.isAdmin ? 'Remove Admin Role' : 'Promote to Admin'}
+        </ListItemText>
+      </MenuItem>
       <MenuItem onClick={() => handleAction('resetPassword')}>
         <ListItemIcon>
           <LockResetIcon fontSize="small" />
         </ListItemIcon>
         <ListItemText>Reset Password</ListItemText>
       </MenuItem>
-      <MenuItem onClick={() => handleAction('delete')}>
+      <Divider />
+      <MenuItem onClick={() => handleAction('delete')} sx={{ color: 'error.main' }}>
         <ListItemIcon>
-          <DeleteIcon fontSize="small" />
+          <DeleteIcon fontSize="small" color="error" />
         </ListItemIcon>
         <ListItemText>Delete User</ListItemText>
       </MenuItem>

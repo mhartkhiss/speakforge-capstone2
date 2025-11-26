@@ -1,9 +1,7 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Box,
-  Card,
-  CardContent,
   TextField,
   Button,
   Typography,
@@ -20,25 +18,25 @@ import {
   Email as EmailIcon,
   Lock as LockIcon,
   Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon
+  VisibilityOff as VisibilityOffIcon,
+  Person as PersonIcon
 } from '@mui/icons-material';
-import logo from '../../assets/speakforgelogo_light.png';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import { getDatabase, ref, get } from 'firebase/database';
-import app from '../../firebase';
-import { loadApiBaseUrl } from '../../config';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getDatabase, ref, set } from 'firebase/database';
+import logo from '../assets/speakforgelogo_light.png';
+import app from '../firebase';
 
-const AdminLogin = () => {
+const Signup = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Brand Colors
+  // Brand Colors matching Login
   const colors = {
     primary: '#387ADF',
     secondary: '#50C4ED',
@@ -48,79 +46,61 @@ const AdminLogin = () => {
     white: '#FFFFFF'
   };
 
-  const handleLogin = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
+
+    // Basic Validation
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const auth = getAuth(app);
       const db = getDatabase(app);
 
-      // 1. Authenticate with Firebase Auth
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-
-      // Wait for auth state to be fully updated
-      await new Promise((resolve) => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-          if (user) {
-            unsubscribe();
-            resolve(user);
-          }
-        });
-      });
-
+      // Create user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      
+      const timestamp = new Date().toISOString(); // Matches "yyyy-MM-dd'T'HH:mm:ss'Z'" loosely, sufficient for JS ISO
 
-      // 2. Fetch User Role from Realtime Database
-      const userRef = ref(db, 'users/' + user.uid);
-      const snapshot = await get(userRef);
+      // Structure matches User.java model from Android app
+      const userData = {
+        userId: user.uid,
+        username: email, // Default username as email, similar to mobile app
+        email: email,
+        profileImageUrl: "none",
+        accountType: "free",
+        language: null, // Initial null/default
+        createdAt: timestamp,
+        lastLoginDate: timestamp,
+        translator: "google",
+        isAdmin: false // Default to false
+      };
 
-      if (snapshot.exists()) {
-        const userData = snapshot.val();
+      // Save to Realtime Database
+      await set(ref(db, 'users/' + user.uid), userData);
 
-      // 3. Check for Admin Role
-      if (userData.isAdmin === true) {
-         // Admin Login: Exchange Firebase Token for Backend DRF Token
-         // Wait a bit more to ensure token is fully valid
-         await new Promise(resolve => setTimeout(resolve, 1000));
-         const idToken = await user.getIdToken(true);
-         const baseUrl = await loadApiBaseUrl();
-         
-         const response = await fetch(`${baseUrl}/admin/login/`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ token: idToken }),
-         });
-
-         if (!response.ok) {
-            throw new Error('Backend authentication failed.');
-         }
-
-         const data = await response.json();
-         localStorage.setItem('adminToken', data.token); // Store DRF token
-         navigate('/admin');
-      } else {
-         // Regular User Login
-         navigate('/user-landing');
-      }
-      } else {
-        // Fallback if no user data exists (should be rare)
-        navigate('/user-landing');
-      }
-
+      // Redirect to login or directly login
+      navigate('/login'); 
     } catch (error) {
-      console.error("Login Error:", error);
-      setError("Invalid email or password.");
+      console.error("Signup error:", error);
+      if (error.code === 'auth/email-already-in-use') {
+        setError('Email address is already in use');
+      } else {
+        setError('Failed to create account: ' + error.message);
+      }
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleTogglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
   };
 
   return (
@@ -166,7 +146,7 @@ const AdminLogin = () => {
             backdropFilter: 'blur(10px)'
           }}
         >
-          <Box sx={{ p: 4, textAlign: 'center', bgcolor: 'transparent' }}>
+          <Box sx={{ p: 4, textAlign: 'center' }}>
             <Box sx={{
               width: 80,
               height: 80,
@@ -183,13 +163,13 @@ const AdminLogin = () => {
             </Box>
             
             <Typography variant="h5" component="h1" sx={{ fontWeight: 800, color: colors.dark, mb: 1 }}>
-              Welcome Back
+              Create Account
             </Typography>
             <Typography variant="body2" sx={{ color: '#666', mb: 4 }}>
-              Enter your credentials to continue
+              Join SpeakForge today
             </Typography>
 
-            <Box component="form" onSubmit={handleLogin} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box component="form" onSubmit={handleSignup} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               {error && (
                 <Alert severity="error" sx={{ borderRadius: 2 }}>
                   {error}
@@ -203,14 +183,6 @@ const AdminLogin = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    '&.Mui-focused fieldset': {
-                      borderColor: colors.primary,
-                    },
-                  },
-                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -227,14 +199,6 @@ const AdminLogin = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    '&.Mui-focused fieldset': {
-                      borderColor: colors.primary,
-                    },
-                  },
-                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -244,14 +208,29 @@ const AdminLogin = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        aria-label="toggle password visibility"
-                        onClick={handleTogglePasswordVisibility}
+                        onClick={() => setShowPassword(!showPassword)}
                         edge="end"
                       >
                         {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </IconButton>
                     </InputAdornment>
                   ),
+                }}
+              />
+
+              <TextField
+                label="Confirm Password"
+                type={showPassword ? 'text' : 'password'}
+                fullWidth
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockIcon sx={{ color: colors.primary }} />
+                    </InputAdornment>
+                  )
                 }}
               />
               
@@ -277,28 +256,16 @@ const AdminLogin = () => {
                   mt: 1
                 }}
               >
-                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
-              </Button>
-
-              <Button
-                variant="text"
-                onClick={() => navigate('/')}
-                sx={{ 
-                  color: '#666', 
-                  textTransform: 'none',
-                  '&:hover': { color: colors.primary, bgcolor: 'transparent' }
-                }}
-              >
-                Back to Home
+                {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign Up'}
               </Button>
 
               <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center', gap: 1 }}>
                 <Typography variant="body2" color="text.secondary">
-                  Don't have an account?
+                  Already have an account?
                 </Typography>
-                <Link to="/signup" style={{ textDecoration: 'none' }}>
+                <Link to="/login" style={{ textDecoration: 'none' }}>
                   <Typography variant="body2" sx={{ color: colors.primary, fontWeight: 600 }}>
-                    Sign Up
+                    Log In
                   </Typography>
                 </Link>
               </Box>
@@ -310,4 +277,5 @@ const AdminLogin = () => {
   );
 };
 
-export default AdminLogin;
+export default Signup;
+

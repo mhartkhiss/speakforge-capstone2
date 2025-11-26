@@ -22,7 +22,8 @@ import {
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
   CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon // Changed from CancelCircleIcon to correct name if needed, assuming CancelIcon exists in material
+  Cancel as CancelIcon,
+  AdminPanelSettings as AdminIcon
 } from '@mui/icons-material';
 
 const UsersTable = ({ 
@@ -65,6 +66,18 @@ const UsersTable = ({
         size="small" 
       />
     );
+  };
+
+  const getRoleChip = (user) => {
+    return user.isAdmin === true ? (
+      <Chip 
+        icon={<AdminIcon sx={{ '&&': { fontSize: 16 } }} />}
+        label="Admin" 
+        color="secondary"
+        size="small" 
+        sx={{ bgcolor: '#9c27b0', color: 'white', ml: 1 }}
+      />
+    ) : null;
   };
 
   const formatDate = (dateString) => {
@@ -175,7 +188,10 @@ const UsersTable = ({
                     }
                   }}
                 >
-                  <TableCell sx={{ color: '#555', fontWeight: 500 }}>{userId}</TableCell>
+                  <TableCell sx={{ color: '#555', fontWeight: 500 }}>
+                    {userId}
+                    {getRoleChip(user)}
+                  </TableCell>
                   <TableCell>
                     {getAccountTypeChip(user.accountType)}
                   </TableCell>
