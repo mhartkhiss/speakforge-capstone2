@@ -30,6 +30,6 @@ public enum TranslatorType {
                 return type;
             }
         }
-        return GEMINI; // default
+        return CLAUDE; // default
     }
 } 

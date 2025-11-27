@@ -119,7 +119,7 @@ public class LoginActivity extends BaseAuthActivity {
                         userRef.child("lastLoginDate").setValue(currentTimestamp);
                         
                         if (!dataSnapshot.hasChild("translator")) {
-                            userRef.child("translator").setValue("gemini");
+                            userRef.child("translator").setValue("claude");
                         }
                         Intent intent;
                         if (dataSnapshot.exists() && dataSnapshot.hasChild("language")) {

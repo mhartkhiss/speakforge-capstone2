@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
             Variables.userEmail = "offline@speakforge.app";
             Variables.userAccountType = "guest";
             Variables.userLanguage = "English";
-            Variables.userTranslator = "gemini";
+            Variables.userTranslator = "claude";
         }
 
         // Initialize translation mode from SharedPreferences

@@ -145,7 +145,7 @@ Example: anime_character:Shinobu,Doma|anime_title:Demon Slayer
 """
 
             message = anthropic_client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-3-7-sonnet-20250219",
                 max_tokens=150,
                 temperature=0.1,
                 system="You are an entity extractor. Extract only relevant entities, not full sentences.",
@@ -400,7 +400,7 @@ Example: anime,0.85
             from .translation_helpers import anthropic_client
             
             message = anthropic_client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-3-7-sonnet-20250219",
                 max_tokens=50,  # Keep it short for speed
                 temperature=0.1,
                 system="You are a fast topic classifier. Focus on recent messages and topic shifts.",
@@ -729,7 +729,7 @@ Example: anime,0.85
             print(f"🤖 AI TOPIC CLASSIFICATION: Analyzing recent messages: {recent_context[:100]}...")
             
             message = anthropic_client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-3-7-sonnet-20250219",
                 max_tokens=50,  # Very short response needed
                 temperature=0.1,
                 system="You are a topic classifier. Respond only with: topic,confidence",

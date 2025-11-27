@@ -166,7 +166,7 @@ public class SplashActivity extends AppCompatActivity {
         Variables.userEmail = "offline@speakforge.app";
         Variables.userAccountType = "guest";
         Variables.userLanguage = "English";
-        Variables.userTranslator = "gemini";
+        Variables.userTranslator = "claude";
         
         // Set preferences for offline mode to ensure smooth flow if they restart
         SharedPreferences prefs = getSharedPreferences(Variables.PREFS_NAME, MODE_PRIVATE);
@@ -226,7 +226,7 @@ public class SplashActivity extends AppCompatActivity {
             Variables.userEmail = isOfflineMode ? "offline@speakforge.app" : "guest@speakforge.app";
             Variables.userAccountType = "guest";
             Variables.userLanguage = "English";
-            Variables.userTranslator = "gemini";
+            Variables.userTranslator = "claude";
             
             intent = new Intent(SplashActivity.this, MainActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

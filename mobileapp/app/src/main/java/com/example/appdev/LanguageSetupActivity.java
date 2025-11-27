@@ -55,7 +55,7 @@ public class LanguageSetupActivity extends AppCompatActivity {
         if ("guest".equals(Variables.userUID)) {
             // For guest users, just store the language in Variables
             Variables.userLanguage = language;
-            Variables.userTranslator = "gemini"; // Default translator for guest
+            Variables.userTranslator = "claude"; // Default translator for guest
             
             Toast.makeText(LanguageSetupActivity.this, "Language set to " + language, Toast.LENGTH_SHORT).show();
             startActivity(new Intent(LanguageSetupActivity.this, MainActivity.class));

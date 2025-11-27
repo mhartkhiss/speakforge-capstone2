@@ -617,7 +617,7 @@ public class BasicTranslationFragment extends Fragment {
         if (translatorText.contains("GPT-4")) return "gpt4";
         if (translatorText.contains("Gemini")) return "gemini";
         if (translatorText.contains("Claude")) return "claude";
-        return "gemini"; // default to gemini
+        return "claude"; // default to claude
     }
 
     private void showHistoryDialog() {

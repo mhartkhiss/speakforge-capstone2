@@ -197,7 +197,7 @@ public class WelcomeScreen extends AppCompatActivity {
                         Variables.userAccountType = "guest";
                         // Set default language and translator for guest
                         Variables.userLanguage = "English";
-                        Variables.userTranslator = "gemini";
+                        Variables.userTranslator = "claude";
                         
                         // Save guest user state in SharedPreferences
                         SharedPreferences prefs = getSharedPreferences(Variables.PREFS_NAME, MODE_PRIVATE);

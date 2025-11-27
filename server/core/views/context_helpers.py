@@ -435,7 +435,7 @@ def perform_ai_translation(text, context_instruction, model, user_id="", session
 
     if model == 'claude':
         message = anthropic_client.messages.create(
-            model="claude-3-5-sonnet-20241022",
+            model="claude-3-7-sonnet-20250219",
             max_tokens=8192,
             temperature=0.1,
             system=context_instruction,
@@ -588,7 +588,7 @@ def translate_with_context(text, source_language, target_language, context, mode
             
             
             message = anthropic_client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-3-7-sonnet-20250219",
                 max_tokens=8192,
                 temperature=0.1,
                 system=system_message,
