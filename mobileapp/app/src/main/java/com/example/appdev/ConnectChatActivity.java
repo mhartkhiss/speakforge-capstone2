@@ -50,7 +50,7 @@ public class ConnectChatActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewChat;
     private ImageButton buttonVoiceIcon;
-    private androidx.cardview.widget.CardView languageSelectionCard;
+    private LinearLayout languageSelectionCard;
     private TextView buttonLanguageSelection;
     private ImageButton buttonChangeTranslatorNew;
     private ImageButton buttonChatToggle;
@@ -861,6 +861,7 @@ public class ConnectChatActivity extends AppCompatActivity {
             window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
             window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                             android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setDimAmount(0.8f);
         }
 
         // Get container for language buttons
@@ -895,6 +896,7 @@ public class ConnectChatActivity extends AppCompatActivity {
         if (window != null) {
             window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
             window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setDimAmount(0.8f);
         }
 
         // Get container for translator buttons

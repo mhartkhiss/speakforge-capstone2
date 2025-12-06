@@ -41,7 +41,7 @@
       android:layout_width="0dp"
       android:layout_height="wrap_content"
       android:orientation="horizontal"
-      android:background="#F5F5F5"
+      android:background="@drawable/glass_background"
       android:elevation="8dp"
       android:padding="8dp"
       android:visibility="gone"
@@ -97,7 +97,7 @@
       android:layout_width="0dp"
       android:layout_height="wrap_content"
       android:layout_margin="16dp"
-      android:background="@drawable/input_container_background"
+      android:background="@drawable/glass_background"
       android:elevation="4dp"
       android:orientation="vertical"
       android:padding="12dp"
@@ -118,8 +118,7 @@
           android:layout_width="40dp"
           android:layout_height="40dp"
           android:src="@drawable/ic_chat"
-          android:background="@drawable/circle_background"
-          android:backgroundTint="#FFFFFF"
+          android:background="@drawable/glass_button_background"
           android:padding="8dp"
           android:tint="#50C4ED"
           android:scaleType="fitCenter"
@@ -132,25 +131,24 @@
           android:layout_width="36dp"
           android:layout_height="36dp"
           android:src="@drawable/ic_translate"
-          android:background="@drawable/circle_background"
-          android:backgroundTint="#FFFFFF"
+          android:background="@drawable/glass_button_background"
           android:padding="6dp"
           android:scaleType="fitCenter"
           android:contentDescription="Change translator"
+          app:tint="@null"
           android:layout_marginEnd="8dp" />
 
       <!-- Language Selection Button (matching BasicTranslationFragment style) -->
-      <androidx.cardview.widget.CardView
+      <LinearLayout
           android:id="@+id/languageSelectionCard"
           android:layout_width="wrap_content"
           android:layout_height="40dp"
           android:layout_marginEnd="8dp"
           android:clickable="true"
           android:focusable="true"
-          android:foreground="?attr/selectableItemBackground"
-          app:cardCornerRadius="20dp"
-          app:cardElevation="0dp"
-          app:cardBackgroundColor="#FFF3E0">
+          android:background="@drawable/glass_pill_background"
+          android:gravity="center"
+          android:orientation="horizontal">
 
           <TextView
               android:id="@+id/buttonLanguageSelection"
@@ -158,13 +156,13 @@
               android:layout_height="match_parent"
               android:gravity="center"
               android:paddingHorizontal="16dp"
-              android:fontFamily="@font/poppins"
+              android:fontFamily="@font/poppins_medium"
               android:text="English"
               android:textColor="#FF5722"
               android:textSize="16sp"
               android:contentDescription="Select language" />
 
-      </androidx.cardview.widget.CardView>
+      </LinearLayout>
 
       <!-- Spacer to push mic button to the right -->
       <View
@@ -178,10 +176,9 @@
           android:layout_width="56dp"
           android:layout_height="56dp"
           android:src="@drawable/ic_voice"
-          android:background="@drawable/circle_background"
-          android:backgroundTint="#FF5722"
+          android:background="@drawable/glass_button_background"
           android:padding="12dp"
-          android:tint="#FFFFFF"
+          android:tint="#FF5722"
           android:scaleType="fitCenter"
           android:contentDescription="Voice input" />
 
@@ -222,10 +219,9 @@
           android:layout_width="40dp"
           android:layout_height="40dp"
           android:src="@drawable/ic_send"
-          android:background="@drawable/circle_background"
-          android:backgroundTint="#50C4ED"
+          android:background="@drawable/glass_button_background"
           android:padding="8dp"
-          android:tint="#FFFFFF"
+          android:tint="#50C4ED"
           android:scaleType="fitCenter"
           android:contentDescription="Send message" />
 

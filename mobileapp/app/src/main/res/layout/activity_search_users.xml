@@ -4,85 +4,43 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
+    android:background="@drawable/main_gradient_background"
     tools:context=".SearchUsersActivity">
 
-    <!-- Header Card -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardViewHeader"
+    <!-- Search Bar -->
+    <LinearLayout
+        android:id="@+id/cardViewSearch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
-        android:clickable="true"
-        android:focusable="true"
-        android:foreground="@drawable/background"
-        app:cardBackgroundColor="#F5F5F5"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp"
+        android:orientation="horizontal"
+        android:padding="4dp"
+        android:background="@drawable/glass_pill_background"
         app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="center_vertical"
             android:padding="12dp"
-            android:background="@drawable/contact_bg">
+            android:gravity="center_vertical">
 
-            <!-- Back button container with rounded background -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:layout_marginEnd="12dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:cardBackgroundColor="#EEEEEE">
-
-                <ImageView
-                    android:id="@+id/imageViewBack"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:src="@drawable/ic_back"
-                    android:padding="8dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"/>
-            </androidx.cardview.widget.CardView>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Search Users"
-                android:textColor="@color/black"
-                android:textSize="18sp"
-                android:fontFamily="@font/poppins"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
-
-    <!-- Search Bar -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cardViewSearch"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp"
-        app:cardBackgroundColor="#FFFFFF"
-        app:layout_constraintTop_toBottomOf="@+id/cardViewHeader">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="12dp">
+            <ImageView
+                android:id="@+id/imageViewBack"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_back"
+                android:padding="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:tint="#505050" />
 
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:layout_gravity="center_vertical"
                 android:src="@drawable/ic_search"
-                app:tint="#757575" />
+                app:tint="#505050" />
 
             <EditText
                 android:id="@+id/editTextSearch"
@@ -94,51 +52,44 @@
                 android:imeOptions="actionSearch"
                 android:inputType="text"
                 android:textSize="16sp"
-                android:fontFamily="@font/poppins"
-                android:padding="8dp" />
+                android:textColor="@color/black"
+                android:textColorHint="#606060"
+                android:fontFamily="@font/poppins"/>
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </LinearLayout>
 
     <!-- Recent Connections Section -->
-    <androidx.cardview.widget.CardView
+    <LinearLayout
         android:id="@+id/cardViewRecentConnections"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp"
         android:visibility="gone"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="2dp"
-        app:cardBackgroundColor="#FFFFFF"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:background="@drawable/glass_background"
         app:layout_constraintTop_toBottomOf="@+id/cardViewSearch">
 
-        <LinearLayout
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Recent Connections"
+            android:textColor="@color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/poppins"
+            android:layout_marginBottom="8dp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewRecentConnections"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Recent Connections"
-                android:textColor="@color/black"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/poppins"
-                android:layout_marginBottom="8dp" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewRecentConnections"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:orientation="horizontal"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                tools:listitem="@layout/item_user"
-                tools:itemCount="3" />
-
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:listitem="@layout/item_user"
+            tools:itemCount="3" />
+    </LinearLayout>
 
     <!-- User List -->
     <androidx.recyclerview.widget.RecyclerView

@@ -47,7 +47,7 @@ public class SearchUsersActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private TextView textViewNoUsers;
     private ImageView imageViewBack;
-    private androidx.cardview.widget.CardView cardViewRecentConnections;
+    private android.widget.LinearLayout cardViewRecentConnections;
 
     private SearchUserAdapter searchUserAdapter;
     private RecentConnectionsAdapter recentConnectionsAdapter;
@@ -422,6 +422,7 @@ public class SearchUsersActivity extends AppCompatActivity {
                 window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                 window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+                window.setDimAmount(0.8f);
             }
 
             // Initialize dialog views

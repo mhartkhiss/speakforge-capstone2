@@ -33,7 +33,6 @@ import com.example.appdev.models.Languages;
 import com.example.appdev.utils.SpeechRecognitionDialog;
 import com.example.appdev.utils.SpeechRecognitionHelper;
 import com.example.appdev.utils.CustomNotification;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.example.appdev.utils.ConversationalSpeechRecognizer;
 import com.example.appdev.utils.LoadingDotsView;
 import com.example.appdev.utils.TranslationApiService;
@@ -58,16 +57,16 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
     private RecyclerView user1RecyclerView;
     private TextView user1InputText;
     private Spinner user1LanguageSpinner;
-    private FloatingActionButton user1SpeakButton;
-    private FloatingActionButton user1ClearButton;
+    private android.widget.ImageButton user1SpeakButton;
+    private android.widget.ImageButton user1ClearButton;
     private ConversationalAdapter user1Adapter; // Displays messages from User 2
     
     // User 2 (Top) Views
     private RecyclerView user2RecyclerView;
     private TextView user2InputText;
     private Spinner user2LanguageSpinner;
-    private FloatingActionButton user2SpeakButton;
-    private FloatingActionButton user2ClearButton;
+    private android.widget.ImageButton user2SpeakButton;
+    private android.widget.ImageButton user2ClearButton;
     private ConversationalAdapter user2Adapter; // Displays messages from User 1
 
     // Speech Recognition
@@ -489,7 +488,7 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
     // New helper for input text views
     private void updateInputTextView(TextView textView, String text) {
         boolean isUser1 = (textView == user1InputText);
-        FloatingActionButton clearButton = isUser1 ? user1ClearButton : user2ClearButton;
+        android.widget.ImageButton clearButton = isUser1 ? user1ClearButton : user2ClearButton;
 
         if (text.isEmpty()) {
             textView.setVisibility(View.GONE);

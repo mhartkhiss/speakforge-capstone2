@@ -99,8 +99,8 @@ public class BasicTranslationFragment extends Fragment {
     private Spinner outputLanguageSelection;
     private TextInputEditText textInput;
     private TextInputLayout textInputLayout;
-    private FloatingActionButton btnStartSpeech;
-    private MaterialButton btnTranslate, btnClear;
+    private ImageButton btnStartSpeech;
+    private androidx.appcompat.widget.AppCompatButton btnTranslate, btnClear;
     private View rootView;
     private Handler animationHandler;
     private Runnable animationRunnable;
@@ -116,9 +116,9 @@ public class BasicTranslationFragment extends Fragment {
     private ImageView translatorIcon;
     private View resultCard;
     private boolean isTranslating = false;
-    private FloatingActionButton stopTranslationButton;
+    private ImageButton stopTranslationButton;
     private boolean isCurrentlyTranslating = false;
-    private FloatingActionButton btnStartConversation;
+    private ImageButton btnStartConversation;
     private de.hdodenhof.circleimageview.CircleImageView profileButton;
     private SpeechRecognitionHelper speechHelper;
     private LoadingDotsView loadingDotsView;
@@ -132,34 +132,41 @@ public class BasicTranslationFragment extends Fragment {
     private TextView modeFeedbackText;
     private Handler feedbackHandler = new Handler();
 
+    private TextView helperText; // Removed from UI, keeping variable to avoid build break if referenced, but unused
+    private TextView placeholderText;
+    private View bottomBar;
+    private android.widget.ScrollView mainContentScrollView;
+    private boolean isKeyboardVisible = false;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         rootView = inflater.inflate(R.layout.fragment_basictranslation, container, false);
         
+        // Add keyboard detection
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                if (isTranslating) return;  // Skip keyboard checks during translation
-
                 Rect r = new Rect();
                 rootView.getWindowVisibleDisplayFrame(r);
                 int screenHeight = rootView.getRootView().getHeight();
                 int keypadHeight = screenHeight - r.bottom;
 
-                if (keypadHeight > screenHeight * 0.15) {
-                    // Keyboard is shown - always hide result card
-                    resultCard.setVisibility(View.GONE);
-                } else {
-                    // Keyboard is hidden - show if we have a translation
-                    if (!TextUtils.isEmpty(textViewResult.getText()) && 
-                        !textViewResult.getText().toString().contains("Translating")) {
-                        resultCard.setVisibility(View.VISIBLE);
+                boolean isKeyboardOpen = keypadHeight > screenHeight * 0.15;
+                
+                if (isKeyboardOpen != isKeyboardVisible) {
+                    isKeyboardVisible = isKeyboardOpen;
+                    checkFabVisibility();
+                    
+                    if (isKeyboardVisible && mainContentScrollView != null) {
+                        // Scroll to bottom when keyboard opens
+                        mainContentScrollView.postDelayed(() -> 
+                            mainContentScrollView.fullScroll(View.FOCUS_DOWN), 100);
                     }
                 }
             }
         });
-
+        
         return rootView;
     }
 
@@ -182,6 +189,11 @@ public class BasicTranslationFragment extends Fragment {
         outputLanguageSelection = view.findViewById(R.id.languageSpinner);  // Initialize Spinner here
         btnHistory = view.findViewById(R.id.btnHistory);
         modeFeedbackText = view.findViewById(R.id.modeFeedbackText);
+        // helperText removed from layout
+        bottomBar = view.findViewById(R.id.bottomBar);
+        placeholderText = view.findViewById(R.id.placeholderText);
+        setupPlaceholderText(); // Setup text with icon
+        mainContentScrollView = view.findViewById(R.id.mainContentScrollView);
 
         // Initialize translation mode from SharedPreferences
         TranslationModeManager.initializeFromPreferences(requireContext());
@@ -212,11 +224,13 @@ public class BasicTranslationFragment extends Fragment {
             translatorIcon.setImageResource(translatorType.getIconResourceId());
             
             // Add click listener to allow guest users to change their source language
-            View languageCard = view.findViewById(R.id.languageCard);
-            if (languageCard != null) {
-                languageCard.setOnClickListener(v -> showLanguageSelectionDialog());
+            // The language selector is now a LinearLayout container, not a specific CardView
+            // We'll attach the listener to the container if we can find it, or the label
+            View languageContainer = view.findViewById(R.id.languageSelectorContainer);
+            if (languageContainer != null) {
+                languageContainer.setOnClickListener(v -> showLanguageSelectionDialog());
             } else {
-                // If languageCard is not found, add click listener directly to the label
+                // Fallback to label if container not found
                 currentLanguageLabel.setOnClickListener(v -> showLanguageSelectionDialog());
             }
             
@@ -286,8 +300,10 @@ public class BasicTranslationFragment extends Fragment {
 
         resultCard = view.findViewById(R.id.resultCard);
 
-        // Initially hide result card
-        resultCard.setVisibility(View.GONE);
+        // Result card is visible by default with placeholder
+        resultCard.setVisibility(View.VISIBLE);
+        if (placeholderText != null) placeholderText.setVisibility(View.VISIBLE);
+        if (textViewResult != null) textViewResult.setVisibility(View.GONE);
 
         stopTranslationButton = view.findViewById(R.id.stopTranslationButton);
         stopTranslationButton.setOnClickListener(v -> stopTranslation());
@@ -326,15 +342,16 @@ public class BasicTranslationFragment extends Fragment {
         btnClear.setOnClickListener(v -> {
             textInput.setText("");
             textViewResult.setText("");
-            textViewResult.setTextColor(getResources().getColor(android.R.color.darker_gray));
+            textViewResult.setVisibility(View.GONE);
+            if (placeholderText != null) placeholderText.setVisibility(View.VISIBLE);
+            
             updateButtonVisibility(false);
             
-            // Hide result card with animation
-            resultCard.animate()
-                    .alpha(0f)
-                    .setDuration(300)
-                    .withEndAction(() -> resultCard.setVisibility(View.GONE))
-                    .start();
+            // Keep result card visible for placeholder
+            resultCard.setVisibility(View.VISIBLE);
+            resultCard.setAlpha(1f);
+            
+            checkFabVisibility();
         });
 
         textInput.addTextChangedListener(new TextWatcher() {
@@ -345,6 +362,10 @@ public class BasicTranslationFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 updateButtonVisibility(s.toString().trim().length() > 0);
+                if (isKeyboardVisible && mainContentScrollView != null) {
+                    mainContentScrollView.postDelayed(() -> 
+                        mainContentScrollView.fullScroll(View.FOCUS_DOWN), 100);
+                }
             }
 
             @Override
@@ -375,16 +396,39 @@ public class BasicTranslationFragment extends Fragment {
     }
 
     private void updateButtonVisibility(boolean hasText) {
-        // Speech and conversation buttons are only visible when there's no text
-        btnStartSpeech.setVisibility(hasText ? View.GONE : View.VISIBLE);
-        btnStartConversation.setVisibility(hasText ? View.GONE : View.VISIBLE);
-        btnHistory.setVisibility(hasText ? View.GONE : View.VISIBLE);
-        
         // Translate and clear buttons are only visible when there's text
         btnTranslate.setVisibility(hasText ? View.VISIBLE : View.GONE);
         btnClear.setVisibility(hasText ? View.VISIBLE : View.GONE);
         
         // Profile button is always visible
+        
+        // Ensure FABs are visible (unless hidden by checkFabVisibility logic)
+        // We reset them to visible here because previous logic might have hidden them
+        // But we rely on bottomBar visibility mainly.
+        // Just in case individual buttons were hidden:
+        btnStartSpeech.setVisibility(View.VISIBLE);
+        btnStartConversation.setVisibility(View.VISIBLE);
+        btnHistory.setVisibility(View.VISIBLE);
+        
+        checkFabVisibility();
+    }
+
+    private void checkFabVisibility() {
+        // Only hide FABs if we have a visible result AND keyboard is up.
+        // If it's just the placeholder, we shouldn't hide FABs?
+        // But resultCard is always visible now. 
+        // We can check if textViewResult is visible (meaning we have an actual translation).
+        
+        boolean isTranslationResultVisible = (textViewResult != null && textViewResult.getVisibility() == View.VISIBLE);
+        
+        if (bottomBar != null) {
+            // Hide bottom bar only if we are showing a translation AND keyboard is open
+            if (isKeyboardVisible && isTranslationResultVisible) {
+                bottomBar.setVisibility(View.GONE);
+            } else {
+                bottomBar.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     private void translateAnimation() {
@@ -393,15 +437,21 @@ public class BasicTranslationFragment extends Fragment {
         // Clear any existing text
         textViewResult.setText("");
         textViewResult.setVisibility(View.GONE);
+        if (placeholderText != null) placeholderText.setVisibility(View.GONE); // Hide placeholder during animation
         
-        // Show the GIF animation
-        translatingAnimation.setVisibility(View.VISIBLE);
+        // Show the GIF animation inside the result card
+        if (translatingAnimation != null) {
+            translatingAnimation.setVisibility(View.VISIBLE);
+        }
         
         isTranslating = true;
+        checkFabVisibility();
     }
 
     private void stopAnimation() {
-        translatingAnimation.setVisibility(View.GONE);
+        if (translatingAnimation != null) {
+            translatingAnimation.setVisibility(View.GONE);
+        }
     }
 
     private void startTranslation() {
@@ -447,15 +497,15 @@ public class BasicTranslationFragment extends Fragment {
         stopAnimation();
         enableInputSection();
         
-        // Hide result card with animation
-        resultCard.animate()
-                .alpha(0f)
-                .setDuration(300)
-                .withEndAction(() -> {
-                    resultCard.setVisibility(View.GONE);
-                    textViewResult.setText("");  // Clear the translated text
-                })
-                .start();
+        // Return to placeholder state
+        if (placeholderText != null) placeholderText.setVisibility(View.VISIBLE);
+        textViewResult.setVisibility(View.GONE);
+        textViewResult.setText("");
+        
+        resultCard.setVisibility(View.VISIBLE);
+        resultCard.setAlpha(1f);
+        
+        checkFabVisibility();
             
         stopTranslationButton.setVisibility(View.GONE);
         isTranslating = false;
@@ -501,14 +551,12 @@ public class BasicTranslationFragment extends Fragment {
         // Start translation UI state
         startTranslation();
 
-        // Show result card with animation
+        // Ensure Result Card is visible
         resultCard.setVisibility(View.VISIBLE);
-        resultCard.setAlpha(0f);
-        resultCard.animate()
-                .alpha(1f)
-                .setDuration(300)
-                .start();
-
+        resultCard.setAlpha(1f);
+        // Hide placeholder
+        if (placeholderText != null) placeholderText.setVisibility(View.GONE);
+        
         // Hide keyboard
         InputMethodManager imm = (InputMethodManager) requireActivity().getSystemService(Activity.INPUT_METHOD_SERVICE);
         if (imm != null && getView() != null) {
@@ -655,6 +703,7 @@ public class BasicTranslationFragment extends Fragment {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, 
                             ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setDimAmount(0.8f);
         }
         historyDialog.show();
     }
@@ -679,6 +728,7 @@ public class BasicTranslationFragment extends Fragment {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, 
                             ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setDimAmount(0.8f);
         }
         confirmDialog.show();
     }
@@ -747,7 +797,15 @@ public class BasicTranslationFragment extends Fragment {
         
         // Display result
         textViewResult.setVisibility(View.VISIBLE);
+        if (placeholderText != null) placeholderText.setVisibility(View.GONE);
+        
         textViewResult.setText(translatedText);
+        // Ensure result card is visible
+        if (resultCard != null) {
+            resultCard.setVisibility(View.VISIBLE);
+            resultCard.setAlpha(1f);
+            checkFabVisibility();
+        }
         textViewResult.setTextColor(getResources().getColor(android.R.color.black));
     }
 
@@ -757,6 +815,9 @@ public class BasicTranslationFragment extends Fragment {
         textViewResult.setTextColor(getResources().getColor(android.R.color.holo_red_light));
         textViewResult.setTextSize(38);
         textViewResult.setAlpha(1.0f);
+        textViewResult.setVisibility(View.VISIBLE);
+        if (placeholderText != null) placeholderText.setVisibility(View.GONE);
+        checkFabVisibility();
     }
 
     private void showTranslatorSelectionDialog(View anchorView) {
@@ -768,6 +829,7 @@ public class BasicTranslationFragment extends Fragment {
         Window window = translatorDialog.getWindow();
         if (window != null) {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+            window.setDimAmount(0.8f);
             
             // Get location of anchor view
             int[] location = new int[2];
@@ -803,6 +865,7 @@ public class BasicTranslationFragment extends Fragment {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setDimAmount(0.8f);
         }
 
         // Setup mode selection buttons
@@ -827,7 +890,7 @@ public class BasicTranslationFragment extends Fragment {
                 .inflate(R.layout.conversational_mode_button, container, false);
         ((TextView) connectUsersButton.findViewById(R.id.modeTitle)).setText("Connect with Other Users");
         ((TextView) connectUsersButton.findViewById(R.id.modeDescription))
-                .setText("Voice chat with remote users via Firebase");
+                .setText("Two users on different devices, with a chat-style interface");
         ((ImageView) connectUsersButton.findViewById(R.id.modeIcon))
                 .setImageResource(R.drawable.ic_connect_users);
         connectUsersButton.setOnClickListener(v -> {
@@ -886,6 +949,7 @@ public class BasicTranslationFragment extends Fragment {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setDimAmount(0.8f);
         }
 
         // Initialize QR code view
@@ -985,6 +1049,7 @@ public class BasicTranslationFragment extends Fragment {
             window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, 
                             ViewGroup.LayoutParams.WRAP_CONTENT);
+            window.setDimAmount(0.8f);
         }
 
         // Get container for language buttons
@@ -1031,14 +1096,18 @@ public class BasicTranslationFragment extends Fragment {
     private void showLoginConfirmationDialog() {
         Dialog dialog = new Dialog(requireContext());
         dialog.setContentView(R.layout.login_confirmation_dialog);
-        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        dialog.setCancelable(true);
+        Window window = dialog.getWindow();
+        if (window != null) {
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+            window.setDimAmount(0.8f);
 
         // Set dialog width to 85% of screen width
         WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
-        layoutParams.copyFrom(dialog.getWindow().getAttributes());
+            layoutParams.copyFrom(window.getAttributes());
         layoutParams.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.85);
-        dialog.getWindow().setAttributes(layoutParams);
+            window.setAttributes(layoutParams);
+        }
+        dialog.setCancelable(true);
 
         // Set up buttons
         com.google.android.material.button.MaterialButton btnCancel = dialog.findViewById(R.id.btnCancel);
@@ -1137,6 +1206,30 @@ public class BasicTranslationFragment extends Fragment {
                 profileButton.setImageResource(R.drawable.default_userpic);
             }
         }
+    }
+
+    private void setupPlaceholderText() {
+        if (placeholderText == null || getContext() == null) return;
+        
+        String text = "Try the conversational style translation by clicking the message bubble icon  "; 
+        android.text.SpannableString spannableString = new android.text.SpannableString(text);
+        
+        android.graphics.drawable.Drawable d = androidx.core.content.ContextCompat.getDrawable(requireContext(), R.drawable.ic_conversational);
+        if (d != null) {
+            d = androidx.core.graphics.drawable.DrawableCompat.wrap(d);
+            // Tint with the blue color used in the button (#1976D2)
+            androidx.core.graphics.drawable.DrawableCompat.setTint(d, android.graphics.Color.parseColor("#1976D2"));
+            
+            // Adjust size to match text (slightly larger for icon visibility)
+            int size = (int) (placeholderText.getTextSize() * 1.3f);
+            d.setBounds(0, 0, size, size);
+            
+            // Use ALIGN_BOTTOM to align with text baseline roughly
+            android.text.style.ImageSpan imageSpan = new android.text.style.ImageSpan(d, android.text.style.ImageSpan.ALIGN_BOTTOM);
+            spannableString.setSpan(imageSpan, text.length() - 1, text.length(), android.text.Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+        }
+        
+        placeholderText.setText(spannableString);
     }
 
     private void showModeFeedback(String message) {

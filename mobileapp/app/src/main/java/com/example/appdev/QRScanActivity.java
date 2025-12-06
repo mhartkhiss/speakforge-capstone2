@@ -274,6 +274,7 @@ public class QRScanActivity extends AppCompatActivity {
                 window.setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
                 window.setLayout(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                                android.view.ViewGroup.LayoutParams.WRAP_CONTENT);
+                window.setDimAmount(0.8f);
             }
 
             // Initialize dialog views
@@ -383,6 +384,8 @@ public class QRScanActivity extends AppCompatActivity {
                                 if (waitingDialog.isShowing()) {
                                     waitingDialog.dismiss();
                                 }
+                                // Finish the scanning activity as we're connected
+                                finish();
                             }, 1500);
                             break;
 
