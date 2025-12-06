@@ -264,8 +264,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        // Prevent going back
-        moveTaskToBack(true);
+        // Check if back stack has fragments
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+        } else {
+            // Prevent going back if there are no fragments in back stack (keep app open)
+            moveTaskToBack(true);
+        }
     }
 
     @Override

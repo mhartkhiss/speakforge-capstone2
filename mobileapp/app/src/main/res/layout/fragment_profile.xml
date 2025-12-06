@@ -11,36 +11,37 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <!-- Header Background with curved bottom -->
-        <View
-            android:id="@+id/headerBackground"
+    <!-- Header Background with curved bottom -->
+    <View
+        android:id="@+id/headerBackground"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:background="@drawable/profile_header_background" />
+
+    <!-- Back Button (Floating on top) -->
+    <ImageButton
+        android:id="@+id/btnBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@drawable/ic_back"
+        android:tint="#FFFFFF"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="Go back"
+        android:elevation="4dp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:overScrollMode="never">
+
+        <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:background="@drawable/profile_header_background" />
-
-        <ScrollView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:overScrollMode="never">
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingHorizontal="2dp">
-
-                <!-- Back Button (inside scrollable content) -->
-                <ImageButton
-                    android:id="@+id/btnBack"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_margin="16dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_back"
-                    android:tint="#666666"
-                    android:padding="12dp"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="Go back" />
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="2dp">
 
                 <!-- Profile Text -->
                 <TextView
