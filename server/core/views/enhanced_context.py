@@ -351,48 +351,33 @@ class TopicAnalyzer:
         if len(conversation.strip()) < 10:
             return ('general', 0.5, [])
         
-        # For performance, only use AI classification every few messages or when topic might have changed
-        # Check if recent message contains topic-shifting indicators
-        recent_message = messages[-1] if messages else ""
-        topic_shift_indicators = [
-            'anime', 'character', 'watch', 'tanaw', 'demon slayer', 'naruto',  # anime
-            'project', 'capstone', 'deadline', 'submit', 'school',  # education
-            'money', 'borrow', 'broke', 'utang', 'kwarta',  # finance
-            'code', 'programming', 'software', 'api', 'database'  # tech
-        ]
+        # REMOVED: Hardcoded topic_shift_indicators and periodic checks.
+        # We now allow the AI to analyze every message sequence to ensure 
+        # dynamic topic shifts are detected immediately without manual keyword maintenance.
         
-        has_topic_indicator = any(indicator in recent_message.lower() for indicator in topic_shift_indicators)
-        
-        # Use AI classification if:
-        # 1. We have topic indicators in recent message, OR
-        # 2. This is one of the first few messages (< 3), OR  
-        # 3. Every 5th message for periodic checking
-        should_use_ai = (
-            has_topic_indicator or 
-            len(messages) <= 3 or 
-            len(messages) % 5 == 0
-        )
-        
-        if not should_use_ai:
-            # Quick return with general topic for efficiency
-            return ('general', 0.6, ['conversation'])
-        
-        print(f"🤖 AI TOPIC: Using AI classification (reason: {'topic_indicator' if has_topic_indicator else 'periodic_check'})")
+        print(f"🤖 AI TOPIC: Using AI classification (Always Active for Dynamic Awareness)")
         
         # Prepare conversation context (limit for performance)
         recent_context = "\n".join(messages[-5:])  # Only last 5 messages for speed
         
         # Create a focused prompt for quick topic detection
         classification_prompt = f"""
-Analyze this conversation and identify the current main topic. Focus on the most recent messages.
+Analyze this conversation and identify the current main topic or intent.
+Do NOT pick from a predefined list. Generate a concise, natural description of the topic (2-5 words).
+
+Examples:
+- Casual Greeting
+- Making Weekend Plans
+- Discussing Anime Characters
+- Debugging Python Code
+- Asking for Directions
+- Ordering Food
 
 RECENT CONVERSATION:
 {recent_context}
 
-Current topic categories: anime, technology, gaming, education, finance, business, food, travel, sports, health, music, general
-
 Respond with ONLY: topic,confidence
-Example: anime,0.85
+Example: Casual Greeting,0.95
 """
 
         try:
@@ -414,7 +399,7 @@ Example: anime,0.85
                 # Parse response: "anime,0.85"
                 if ',' in response:
                     topic, confidence_str = response.split(',', 1)
-                    topic = topic.strip().lower()
+                    topic = topic.strip() # Preserve original casing (e.g., "Casual Greeting")
                     
                     try:
                         confidence = float(confidence_str.strip())
@@ -440,13 +425,14 @@ Example: anime,0.85
     def _extract_simple_keywords(cls, text: str, topic: str) -> List[str]:
         """Extract simple keywords from text based on topic"""
         words = text.lower().split()
+        topic_lower = topic.lower()
         
         # Topic-specific keyword extraction
-        if topic == 'anime':
+        if 'anime' in topic_lower:
             keywords = [w for w in words if w in ['anime', 'character', 'episode', 'watch', 'tanaw', 'demon', 'slayer', 'naruto']]
-        elif topic == 'education':
+        elif 'education' in topic_lower or 'school' in topic_lower:
             keywords = [w for w in words if w in ['project', 'capstone', 'deadline', 'submit', 'school', 'university']]
-        elif topic == 'finance':
+        elif 'finance' in topic_lower or 'money' in topic_lower:
             keywords = [w for w in words if w in ['money', 'borrow', 'broke', 'utang', 'kwarta', 'payment']]
         else:
             keywords = [w for w in words if len(w) > 4][:3]  # General keywords

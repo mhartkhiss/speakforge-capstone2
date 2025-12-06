@@ -211,6 +211,11 @@ public class ConversationalSpeechRecognizer {
             speechRecognizer = null;
         }
     }
+    
+    public void clear() {
+        accumulatedText.setLength(0);
+        lastPartialResult = "";
+    }
 
     public void destroy() {
         stopListening();

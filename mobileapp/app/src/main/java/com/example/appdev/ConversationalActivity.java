@@ -81,6 +81,10 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
 
     // Session ID for API calls
     private String sessionId;
+    
+    // User IDs for context tracking
+    private String user1Id;
+    private String user2Id;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +92,14 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
         
         // Generate a random session ID for this conversation
         sessionId = UUID.randomUUID().toString();
+        
+        // Initialize User IDs
+        if (Variables.userUID != null && !Variables.userUID.isEmpty()) {
+            user1Id = Variables.userUID;
+        } else {
+            user1Id = "user1_" + sessionId;
+        }
+        user2Id = "user2_" + sessionId;
         
         // Make the window background light
         getWindow().setBackgroundDrawableResource(android.R.color.white);
@@ -320,9 +332,15 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
 
         user1ClearButton.setOnClickListener(v -> {
              updateInputTextView(user1InputText, "");
+             if (isUser1Speaking && speechRecognizer != null) {
+                 speechRecognizer.clear();
+             }
         });
         user2ClearButton.setOnClickListener(v -> {
              updateInputTextView(user2InputText, "");
+             if (isUser2Speaking && speechRecognizer != null) {
+                 speechRecognizer.clear();
+             }
         });
     }
 
@@ -506,15 +524,25 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
         String sourceLanguage = isUser1 ? 
             user1LanguageSpinner.getSelectedItem().toString() : 
             user2LanguageSpinner.getSelectedItem().toString();
+            
+        // Generate message ID for context tracking
+        final String messageId = (messageToUpdate != null) ? messageToUpdate.getMessageId() : UUID.randomUUID().toString();
         
-        // Use the API service for translation
-        TranslationApiService.translateText(
+        // Determine user IDs for this turn
+        String currentUserId = isUser1 ? user1Id : user2Id;
+        String recipientId = isUser1 ? user2Id : user1Id;
+        
+        // Use the API service for translation with context
+        TranslationApiService.translateTextWithContext(
                 text,
                 sourceLanguage,
                 targetLanguage,
                 translationMode,
                 Variables.userTranslator != null ? Variables.userTranslator : "gemini",
-                Variables.userUID != null ? Variables.userUID : "",
+                currentUserId,
+                recipientId,
+                sessionId,
+                messageId,
                 new TranslationApiService.TranslationCallback() {
                     @Override
                     public void onSuccess(String translatedMessage) {
@@ -529,7 +557,6 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
                                         user2Adapter.updateMessage(updatePosition, translatedMessage);
                                     } else {
                                         // New message
-                                        String messageId = UUID.randomUUID().toString();
                                         ConversationalMessage msg = new ConversationalMessage(messageId, text, translatedMessage, true, sourceLanguage, targetLanguage);
                                         user2Adapter.addMessage(msg);
                                         user2RecyclerView.smoothScrollToPosition(user2Adapter.getItemCount() - 1);
@@ -543,7 +570,6 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
                                         user1Adapter.updateMessage(updatePosition, translatedMessage);
                                     } else {
                                         // New message
-                                        String messageId = UUID.randomUUID().toString();
                                         ConversationalMessage msg = new ConversationalMessage(messageId, text, translatedMessage, false, sourceLanguage, targetLanguage);
                                         user1Adapter.addMessage(msg);
                                         user1RecyclerView.smoothScrollToPosition(user1Adapter.getItemCount() - 1);
@@ -613,19 +639,31 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
             @Override
             protected Boolean doInBackground(Void... voids) {
                 try {
-                    // Use API to regenerate
+                    // Use API to regenerate with context
                     JSONObject requestBody = new JSONObject();
-                    requestBody.put("text", originalText);
+                    requestBody.put("text", originalText); // Although regenerate endpoint might fetch it, providing it doesn't hurt or maybe it ignores it? 
+                    // Actually regenerate_translation endpoint in python fetches message from Firebase. 
+                    // But for Connect Chat it expects message to be in Firebase. 
+                    // Since we are using translate_db_context for the original translation, the message SHOULD be in Firebase.
+                    
+                    requestBody.put("room_id", sessionId);
+                    requestBody.put("message_id", messageId);
                     requestBody.put("source_language", sourceLanguage);
                     requestBody.put("target_language", targetLanguage);
                     requestBody.put("variants", "multiple");
                     requestBody.put("model", Variables.userTranslator != null ? Variables.userTranslator.toLowerCase() : "gemini");
                     requestBody.put("translation_mode", Variables.isFormalTranslationMode ? "formal" : "casual");
-                    requestBody.put("room_id", sessionId);
-                    requestBody.put("message_id", messageId);
-                    requestBody.put("is_group", false);
+                    
+                    // Add context parameters
+                    requestBody.put("current_user_id", isUser1 ? user1Id : user2Id);
+                    requestBody.put("recipient_id", isUser1 ? user2Id : user1Id);
+                    requestBody.put("use_context", Variables.isContextAwareTranslation);
+                    requestBody.put("context_depth", Variables.contextDepth);
+                    
+                    // Don't save variations to DB for split screen, just use locally
+                    requestBody.put("save_to_db", false);
 
-                    String apiUrl = Variables.API_TRANSLATE_SIMPLE_URL;
+                    String apiUrl = Variables.API_REGENERATE_TRANSLATION_URL;
                     URL url = new URL(apiUrl);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("POST");

@@ -45,9 +45,9 @@ def translate_db_context(request):
             "error": "Missing required fields: text, room_id, message_id, current_user_id, or recipient_id"
         }, status=400)
 
-    # OPTIMIZATION: Skip enhanced context for very short messages (< 10 words)
+    # OPTIMIZATION: Skip enhanced context for very short messages (< 2 words)
     word_count = len(text_to_translate.split())
-    if word_count < 5 and use_enhanced:
+    if word_count < 2 and use_enhanced:
         use_enhanced = False
         print(f"⚡ OPTIMIZATION: Skipping enhanced features for short message ({word_count} words)")
 
@@ -80,14 +80,19 @@ def translate_db_context(request):
             if 'context' in futures:
                 try:
                     context, context_metadata = futures['context'].result()
+                    # If context is None (error), treat as empty list
+                    if context is None:
+                        context = []
                     print(f"Retrieved {len(context)} context messages with topic: {context_metadata.get('topic', 'general')}")
                 except Exception as e:
                     print(f"Error getting enhanced connect chat context: {str(e)}")
                     # Fallback to basic context
                     try:
                         context = get_connect_chat_context(room_id, message_id, context_depth, current_user_id, recipient_id, session_start_time)
+                        if context is None:
+                            context = []
                     except:
-                        pass  # Continue without context
+                        context = []  # Continue without context
             
             # Wait for user profile (if requested)
             if 'profile' in futures:
@@ -123,6 +128,23 @@ def translate_db_context(request):
 
         # Determine the correct Firebase reference path (should be connect_chats for connect chat sessions)
         ref_path = 'connect_chats'  # Always connect_chats for this endpoint
+
+        # Update Firebase with original text and metadata (crucial for split-screen which doesn't pre-save)
+        # This is safe for Connect Mode too as it just overwrites/confirms the data
+        try:
+            message_ref = db.reference(f'{ref_path}/{room_id}/{message_id}')
+            import time
+            current_timestamp = int(time.time() * 1000)
+            
+            update_data = {
+                'voiceText': text_to_translate,
+                'message': text_to_translate, # Store in both for compatibility
+                'senderId': current_user_id,
+                'timestamp': current_timestamp
+            }
+            message_ref.update(update_data)
+        except Exception as e:
+            print(f"Error updating message content in Firebase: {e}")
 
         # Update Firebase
         update_firebase_message(ref_path, room_id, message_id, translations, source_language, translation_mode, False, target_language)
@@ -178,6 +200,7 @@ def regenerate_translation(request):
     context_depth = request.data.get('context_depth', 25)
     session_start_time = request.data.get('session_start_time')
     use_enhanced = request.data.get('use_enhanced', True)  # Enable enhanced features
+    save_to_db = request.data.get('save_to_db', True)  # Default to saving to DB
 
     if not all([room_id, message_id]):
         return Response({
@@ -267,8 +290,9 @@ def regenerate_translation(request):
         # Process translations
         translations = process_translations(translated_text, variants)
 
-        # Update Firebase with new translations
-        update_firebase_message(ref_path, room_id, message_id, translations, source_language, translation_mode, False, target_language)
+        # Update Firebase with new translations ONLY if save_to_db is True
+        if save_to_db:
+            update_firebase_message(ref_path, room_id, message_id, translations, source_language, translation_mode, False, target_language)
 
         response_data = {
             'original_text': text_to_translate,

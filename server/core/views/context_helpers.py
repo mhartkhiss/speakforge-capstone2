@@ -280,8 +280,36 @@ def translate_with_enhanced_context(text, source_language, target_language, cont
     if context_metadata and context_metadata.get('topic'):
         try:
             topic = context_metadata['topic']
-            print(f"📋 ENHANCED TRANSLATION: Applying {topic} domain-specific prompt")
-            domain_prompt = DomainSpecificPromptManager.get_domain_prompt(topic)
+            print(f"📋 ENHANCED TRANSLATION: AI Detected Topic: '{topic}'")
+            
+            # 1. First inject the dynamic topic directly
+            domain_prompt = f"CONTEXT: The current conversation topic is '{topic}'. Adjust tone and vocabulary accordingly."
+            
+            # 2. Check if this dynamic topic maps to any of our specialized domain prompts
+            # This allows us to still use the detailed guidelines for broad categories
+            matched_domain = 'general'
+            topic_lower = topic.lower()
+            
+            # Map dynamic topics to broad domains
+            if any(k in topic_lower for k in ['anime', 'manga', 'character', 'episode']):
+                matched_domain = 'anime'
+            elif any(k in topic_lower for k in ['code', 'tech', 'programming', 'app', 'software']):
+                matched_domain = 'technology'
+            elif any(k in topic_lower for k in ['game', 'gaming', 'play']):
+                matched_domain = 'gaming'
+            elif any(k in topic_lower for k in ['business', 'meeting', 'work', 'job']):
+                matched_domain = 'business'
+            elif any(k in topic_lower for k in ['school', 'study', 'class', 'student']):
+                matched_domain = 'academic'
+            elif any(k in topic_lower for k in ['hi', 'hello', 'greet', 'kamusta', 'morning', 'evening']):
+                matched_domain = 'casual'
+            
+            # If we found a specific domain match (other than general), append its guidelines
+            if matched_domain != 'general':
+                detailed_guidelines = DomainSpecificPromptManager.get_domain_prompt(matched_domain)
+                domain_prompt += f"\n\n{detailed_guidelines}"
+            
+            # 3. Enhance with entities if available
             if context_metadata.get('entities'):
                 print(f"🎭 ENHANCED TRANSLATION: Enhancing prompt with entities: {list(context_metadata['entities'].keys())}")
                 domain_prompt = DomainSpecificPromptManager.enhance_prompt_with_context(
