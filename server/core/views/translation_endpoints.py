@@ -40,6 +40,7 @@ def translate_db_context(request):
     session_start_time = request.data.get('session_start_time')  # Timestamp when current session started
     use_enhanced = request.data.get('use_enhanced', True)  # Enable enhanced features by default
 
+    print("\n------------------------------------------------------------")
     if not all([text_to_translate, room_id, message_id, current_user_id, recipient_id]):
         return Response({
             "error": "Missing required fields: text, room_id, message_id, current_user_id, or recipient_id"
@@ -202,6 +203,7 @@ def regenerate_translation(request):
     use_enhanced = request.data.get('use_enhanced', True)  # Enable enhanced features
     save_to_db = request.data.get('save_to_db', True)  # Default to saving to DB
 
+    print("\n------------------------------------------------------------")
     if not all([room_id, message_id]):
         return Response({
             "error": "Missing required fields: room_id or message_id"
@@ -430,6 +432,7 @@ def translate_simple(request):
     translation_mode = request.data.get('translation_mode', 'casual')
     user_id = request.data.get('user_id', '')
     
+    print("\n------------------------------------------------------------")
     if not text_to_translate:
         return Response({
             "error": "Missing required field: text"

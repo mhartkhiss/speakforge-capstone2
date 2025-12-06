@@ -77,6 +77,11 @@ public class SettingsLoader {
      * Update backend URL in Variables class
      */
     private static void updateBackendUrl(String backendUrl) {
+        if (Variables.isDevelopmentMode) {
+            Log.d(TAG, "Development mode enabled, ignoring backend URL from Firebase. Using: " + Variables.API_BASE_URL);
+            return;
+        }
+
         // We need to reconstruct all the API URLs based on the new base URL
         Variables.API_BASE_URL = backendUrl;
         Variables.API_TRANSLATE_DB_URL = backendUrl + "translate-db/";

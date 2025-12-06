@@ -5,7 +5,7 @@ import java.util.List;
 
 public class Variables {
     // Server Constant variables - these will be updated from Firebase
-    public static String API_BASE_URL = "https://06jwj9s0-8000.asse.devtunnels.ms/api/";
+    public static String API_BASE_URL = "https://k9pvbcf5-8000.asse.devtunnels.ms/api/";
     public static String API_TRANSLATE_DB_URL = API_BASE_URL + "translate-db/";
     public static String API_TRANSLATE_DB_CONTEXT_URL = API_BASE_URL + "translate-db-context/";
     public static String API_TRANSLATE_GROUP_URL = API_BASE_URL + "translate-group/";
@@ -34,6 +34,7 @@ public class Variables {
     public static int openAiPrompt = 1;
     public static boolean isFormalTranslationMode = false;
     public static boolean isContextAwareTranslation = true; // Default to enabled
+    public static boolean isDevelopmentMode = true;
     public static int contextDepth = 5; // Default context depth
 
     // Offline Mode Flag
