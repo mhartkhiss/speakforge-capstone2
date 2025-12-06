@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.speech.RecognizerIntent;
+import com.example.appdev.utils.SpeechRecognitionHelper;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
@@ -72,6 +72,7 @@ public class ConnectChatActivity extends AppCompatActivity {
     private Button buttonChangeLanguage;
     private ImageButton buttonChangeTranslator;
     private ValueEventListener sessionEndListener;
+    private SpeechRecognitionHelper speechHelper;
 
     // Reply UI elements
     private LinearLayout replyContainer;
@@ -248,6 +249,9 @@ public class ConnectChatActivity extends AppCompatActivity {
         buttonEndSession.setOnClickListener(v -> {
             endSession();
         });
+
+        // Initialize speech helper
+        speechHelper = new SpeechRecognitionHelper(this);
 
         // Initialize contact settings reference - check recipient's settings for the current user
         contactSettingsRef = FirebaseDatabase.getInstance().getReference()
@@ -650,24 +654,36 @@ public class ConnectChatActivity extends AppCompatActivity {
     }
 
     private void startSpeechRecognition() {
-
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, com.example.appdev.models.Languages.getLocaleForLanguage(Variables.userLanguage));
-        intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now in " + Variables.userLanguage + "...");
-
-        startActivityForResult(intent, SPEECH_REQUEST_CODE);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            int permissionResult = checkSelfPermission(android.Manifest.permission.RECORD_AUDIO);
+            if (permissionResult == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                startListening();
+            } else {
+                requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, SPEECH_REQUEST_CODE);
+            }
+        } else {
+            startListening();
+        }
     }
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == SPEECH_REQUEST_CODE && resultCode == this.RESULT_OK && data != null) {
-            ArrayList<String> results = data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
-            if (results != null && !results.isEmpty()) {
-                String spokenText = results.get(0);
+    private void startListening() {
+        if (speechHelper != null) {
+            speechHelper.startSpeechRecognition(text -> {
                 // Send the transcribed voice message
-                sendMessage(spokenText, recipientLanguage);
+                sendMessage(text, recipientLanguage);
+            });
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == SPEECH_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                startListening();
+            } else {
+                CustomNotification.showNotification(this,
+                    "Microphone permission is required for speech recognition", false);
             }
         }
     }
@@ -1072,6 +1088,10 @@ public class ConnectChatActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        if (speechHelper != null) {
+            speechHelper.destroy();
+        }
 
         // Remove session end listener if it exists
         if (sessionEndListener != null && sessionId != null && messagesRef != null) {
