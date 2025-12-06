@@ -156,10 +156,9 @@ public class MainActivity extends AppCompatActivity {
             // User is not logged in, redirect to WelcomeScreen
             startActivity(new Intent(this, WelcomeScreen.class));
             finish();
-        } else {
-            // Reset tracking state for fresh app session and start listening for connection requests
+        }         else {
+            // Reset tracking state for fresh app session
             ConnectionRequestManager.getInstance().resetTrackingState();
-            ConnectionRequestManager.getInstance().startListeningForRequests(this);
         }
 
         // Set up offline indicator initially
@@ -182,6 +181,19 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         checkConnectivity();
+
+        // Start listening for connection requests if logged in and not offline/guest
+        if (!Variables.isOfflineMode && !"guest".equals(Variables.userUID) &&
+            FirebaseAuth.getInstance().getCurrentUser() != null) {
+            ConnectionRequestManager.getInstance().startListeningForRequests(this);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Stop listening for connection requests
+        ConnectionRequestManager.getInstance().stopListeningForRequests();
     }
 
     private void checkConnectivity() {

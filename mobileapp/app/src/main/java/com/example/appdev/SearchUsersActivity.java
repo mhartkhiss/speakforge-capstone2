@@ -106,6 +106,20 @@ public class SearchUsersActivity extends AppCompatActivity {
         loadRecentConnections();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Start listening for incoming connection requests
+        ConnectionRequestManager.getInstance().startListeningForRequests(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Stop listening for connection requests to prevent dialogs on background or leaks
+        ConnectionRequestManager.getInstance().stopListeningForRequests();
+    }
+
     private void loadUsers() {
         progressBar.setVisibility(View.VISIBLE);
         textViewNoUsers.setVisibility(View.GONE);

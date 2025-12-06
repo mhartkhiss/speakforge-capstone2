@@ -689,7 +689,7 @@ public class ConnectChatActivity extends AppCompatActivity {
         confirmDialog.setButtonClickListener(v -> {
             confirmDialog.dismiss();
             // Send session end message and finish
-            performEndSession();
+            performEndSession(true);
         });
 
         confirmDialog.show();
@@ -697,17 +697,21 @@ public class ConnectChatActivity extends AppCompatActivity {
 
     /**
      * End the session directly without confirmation dialog
+     * @param sendMessage Whether to send a session end message to the other user
      */
-    private void endSessionDirectly() {
-        performEndSession();
+    private void endSessionDirectly(boolean sendMessage) {
+        performEndSession(sendMessage);
     }
 
     /**
      * Common method to perform session ending logic
+     * @param sendMessage Whether to send a session end message to the other user
      */
-    private void performEndSession() {
-        // Send session end message
-        sendSessionEndMessage();
+    private void performEndSession(boolean sendMessage) {
+        // Send session end message only if requested
+        if (sendMessage) {
+            sendSessionEndMessage();
+        }
 
         // Remove session end listener to prevent crashes
         if (sessionEndListener != null && sessionId != null) {
@@ -787,7 +791,8 @@ public class ConnectChatActivity extends AppCompatActivity {
                                     // Set OK button to end the current user's session directly
                                     sessionEndDialog.setButtonClickListener(v -> {
                                         sessionEndDialog.dismiss();
-                                        endSessionDirectly();
+                                        // End session but don't send a message since the session is already ended by the other user
+                                        endSessionDirectly(false);
                                     });
 
                                     sessionEndDialog.show();
@@ -1059,6 +1064,11 @@ public class ConnectChatActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
+        // Remove session end listener if it exists
+        if (sessionEndListener != null && sessionId != null && messagesRef != null) {
+            messagesRef.child(sessionId).removeEventListener(sessionEndListener);
+        }
 
         // Clear the active session ID when the activity is destroyed
         if (sessionId != null) {

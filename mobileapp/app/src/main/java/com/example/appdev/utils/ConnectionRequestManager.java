@@ -107,6 +107,9 @@ public class ConnectionRequestManager {
      * Start listening for connection requests for the current user
      */
     public void startListeningForRequests(Context context) {
+        // Stop any existing listeners first to ensure we use the current context
+        stopListeningForRequests();
+
         String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         if (currentUserId == null) return;
 
