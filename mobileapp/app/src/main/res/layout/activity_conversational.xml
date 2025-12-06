@@ -56,25 +56,53 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="24dp">
+            android:padding="12dp">
 
             <TextView
-                android:id="@+id/user2Result"
-                android:layout_width="wrap_content"
+                android:id="@+id/user2InputText"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:gravity="center"
-                android:textSize="32sp"
+                android:layout_alignParentBottom="true"
+                android:gravity="center_vertical|start"
+                android:textSize="24sp"
                 android:fontFamily="@font/poppins"
-                android:lineSpacingExtra="8dp"
-                android:padding="24dp"
-                android:background="@drawable/speech_bubble_user2"/>
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:paddingStart="64dp"
+                android:paddingEnd="70dp"
+                android:background="@drawable/rounded_background_semi_transparent"
+                android:textColor="@color/user2_color"
+                android:visibility="gone"
+                android:elevation="4dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/user2RecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@id/user2InputText"
+                android:clipToPadding="false"
+                android:paddingBottom="88dp"
+                android:scrollbars="vertical" />
 
             <com.example.appdev.utils.LoadingDotsView
                 android:id="@+id/user2LoadingDots"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
+                android:visibility="gone"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/user2ClearButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentBottom="true"
+                android:src="@drawable/ic_clear"
+                app:fabSize="mini"
+                app:backgroundTint="#E0E0E0"
+                app:tint="@android:color/black"
+                app:elevation="6dp"
+                android:layout_margin="8dp"
                 android:visibility="gone"/>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -87,7 +115,7 @@
                 app:fabSize="normal"
                 app:backgroundTint="@color/user2_color"
                 app:tint="@android:color/white"
-                app:elevation="0dp"
+                app:elevation="6dp"
                 android:layout_margin="8dp"/>
         </RelativeLayout>
     </LinearLayout>
@@ -172,25 +200,53 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:padding="24dp">
+            android:padding="12dp">
 
             <TextView
-                android:id="@+id/user1Result"
-                android:layout_width="wrap_content"
+                android:id="@+id/user1InputText"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:gravity="center"
-                android:textSize="32sp"
+                android:layout_alignParentBottom="true"
+                android:gravity="center_vertical|start"
+                android:textSize="24sp"
                 android:fontFamily="@font/poppins"
-                android:lineSpacingExtra="8dp"
-                android:padding="24dp"
-                android:background="@drawable/speech_bubble_user1"/>
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:paddingStart="64dp"
+                android:paddingEnd="70dp"
+                android:background="@drawable/rounded_background_semi_transparent"
+                android:textColor="@color/user1_color"
+                android:visibility="gone"
+                android:elevation="4dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/user1RecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_above="@id/user1InputText"
+                android:clipToPadding="false"
+                android:paddingBottom="88dp"
+                android:scrollbars="vertical" />
 
             <com.example.appdev.utils.LoadingDotsView
                 android:id="@+id/user1LoadingDots"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
+                android:visibility="gone"/>
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/user1ClearButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentBottom="true"
+                android:src="@drawable/ic_clear"
+                app:fabSize="mini"
+                app:backgroundTint="#E0E0E0"
+                app:tint="@android:color/black"
+                app:elevation="6dp"
+                android:layout_margin="8dp"
                 android:visibility="gone"/>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -203,7 +259,7 @@
                 app:fabSize="normal"
                 app:backgroundTint="@color/user1_color"
                 app:tint="@android:color/white"
-                app:elevation="0dp"
+                app:elevation="6dp"
                 android:layout_margin="8dp"/>
         </RelativeLayout>
     </LinearLayout>

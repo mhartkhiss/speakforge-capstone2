@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="8dp">
+
+    <FrameLayout
+        android:id="@+id/bubbleContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:minWidth="80dp"
+        android:padding="16dp"
+        android:background="@drawable/speech_bubble_user1"
+        android:layout_marginEnd="8dp">
+
+        <TextView
+            android:id="@+id/messageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:fontFamily="@font/poppins"
+            android:textColor="@android:color/white"/>
+
+        <com.example.appdev.utils.LoadingDotsView
+            android:id="@+id/regeneratingDots"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"/>
+            
+    </FrameLayout>
+
+    <ImageView
+        android:id="@+id/btnRegenerate"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:src="@drawable/ic_regenerate"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="4dp"
+        android:visibility="gone"/>
+
+</LinearLayout>

@@ -40,34 +40,24 @@ public class Languages {
         return locale != null ? locale : Locale.ENGLISH;
     }
 
-    // Get available languages for User 1 (excluding User 2's selection)
+    // Get available languages for User 1
     public static List<String> getUser1Languages() {
-        List<String> allLanguages = getAllLanguages();
-        List<String> availableLanguages = new ArrayList<>(allLanguages);
-        availableLanguages.remove(user2Language);
-        return availableLanguages;
+        return new ArrayList<>(getAllLanguages());
     }
 
-    // Get available languages for User 2 (excluding User 1's selection)
+    // Get available languages for User 2
     public static List<String> getUser2Languages() {
-        List<String> allLanguages = getAllLanguages();
-        List<String> availableLanguages = new ArrayList<>(allLanguages);
-        availableLanguages.remove(user1Language);
-        return availableLanguages;
+        return new ArrayList<>(getAllLanguages());
     }
 
     // Update User 1's language selection
     public static void setUser1Language(String language) {
-        if (!language.equals(user2Language)) {
-            user1Language = language;
-        }
+        user1Language = language;
     }
 
     // Update User 2's language selection
     public static void setUser2Language(String language) {
-        if (!language.equals(user1Language)) {
-            user2Language = language;
-        }
+        user2Language = language;
     }
 
     // Get current language for User 1

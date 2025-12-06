@@ -25,6 +25,10 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.os.Handler;
 import android.view.animation.Interpolator;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.appdev.models.ConversationalMessage;
 import com.example.appdev.models.Languages;
 import com.example.appdev.utils.SpeechRecognitionDialog;
 import com.example.appdev.utils.SpeechRecognitionHelper;
@@ -33,18 +37,38 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.example.appdev.utils.ConversationalSpeechRecognizer;
 import com.example.appdev.utils.LoadingDotsView;
 import com.example.appdev.utils.TranslationApiService;
+import com.example.appdev.adapters.ConversationalAdapter;
 
-public class ConversationalActivity extends AppCompatActivity {
+import androidx.annotation.Nullable;
+
+import org.json.JSONObject;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.OutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Iterator;
+
+public class ConversationalActivity extends AppCompatActivity implements ConversationalAdapter.OnRegenerateListener {
     
     // User 1 (Bottom) Views
-    private TextView user1Result;
+    private RecyclerView user1RecyclerView;
+    private TextView user1InputText;
     private Spinner user1LanguageSpinner;
     private FloatingActionButton user1SpeakButton;
+    private FloatingActionButton user1ClearButton;
+    private ConversationalAdapter user1Adapter; // Displays messages from User 2
     
     // User 2 (Top) Views
-    private TextView user2Result;
+    private RecyclerView user2RecyclerView;
+    private TextView user2InputText;
     private Spinner user2LanguageSpinner;
     private FloatingActionButton user2SpeakButton;
+    private FloatingActionButton user2ClearButton;
+    private ConversationalAdapter user2Adapter; // Displays messages from User 1
 
     // Speech Recognition
     private ConversationalSpeechRecognizer speechRecognizer;
@@ -55,13 +79,15 @@ public class ConversationalActivity extends AppCompatActivity {
     private Drawable micIcon;
     private Drawable stopIcon;
 
-    // Loading dots
-    private LoadingDotsView user1LoadingDots;
-    private LoadingDotsView user2LoadingDots;
+    // Session ID for API calls
+    private String sessionId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Generate a random session ID for this conversation
+        sessionId = UUID.randomUUID().toString();
         
         // Make the window background light
         getWindow().setBackgroundDrawableResource(android.R.color.white);
@@ -116,18 +142,21 @@ public class ConversationalActivity extends AppCompatActivity {
             .start();
 
         // Initialize User 1 (Bottom) Views
-        user1Result = findViewById(R.id.user1Result);
+        user1RecyclerView = findViewById(R.id.user1RecyclerView);
+        user1InputText = findViewById(R.id.user1InputText);
         user1LanguageSpinner = findViewById(R.id.user1LanguageSpinner);
         user1SpeakButton = findViewById(R.id.user1SpeakButton);
+        user1ClearButton = findViewById(R.id.user1ClearButton);
 
         // Initialize User 2 (Top) Views
-        user2Result = findViewById(R.id.user2Result);
+        user2RecyclerView = findViewById(R.id.user2RecyclerView);
+        user2InputText = findViewById(R.id.user2InputText);
         user2LanguageSpinner = findViewById(R.id.user2LanguageSpinner);
         user2SpeakButton = findViewById(R.id.user2SpeakButton);
+        user2ClearButton = findViewById(R.id.user2ClearButton);
 
-        // Initialize text views with empty state
-        updateTextView(user1Result, "", false);
-        updateTextView(user2Result, "", false);
+        // Setup RecyclerViews
+        setupRecyclerViews();
 
         // Initialize Speech Recognition
         speechRecognizer = new ConversationalSpeechRecognizer(this);
@@ -135,10 +164,6 @@ public class ConversationalActivity extends AppCompatActivity {
         // Initialize icons
         micIcon = ContextCompat.getDrawable(this, R.drawable.ic_mic);
         stopIcon = ContextCompat.getDrawable(this, R.drawable.ic_stop);
-
-        // Initialize loading dots
-        user1LoadingDots = findViewById(R.id.user1LoadingDots);
-        user2LoadingDots = findViewById(R.id.user2LoadingDots);
 
         // Initialize conversational icon
         ImageView conversationalIcon = findViewById(R.id.conversationalIcon);
@@ -151,6 +176,22 @@ public class ConversationalActivity extends AppCompatActivity {
 
         // Setup click listeners
         setupClickListeners();
+    }
+
+    private void setupRecyclerViews() {
+        // User 1 RecyclerView (Bottom) - shows messages from User 2
+        user1Adapter = new ConversationalAdapter(this);
+        LinearLayoutManager layoutManager1 = new LinearLayoutManager(this);
+        layoutManager1.setStackFromEnd(true); // Start from bottom
+        user1RecyclerView.setLayoutManager(layoutManager1);
+        user1RecyclerView.setAdapter(user1Adapter);
+
+        // User 2 RecyclerView (Top) - shows messages from User 1
+        user2Adapter = new ConversationalAdapter(this);
+        LinearLayoutManager layoutManager2 = new LinearLayoutManager(this);
+        layoutManager2.setStackFromEnd(true);
+        user2RecyclerView.setLayoutManager(layoutManager2);
+        user2RecyclerView.setAdapter(user2Adapter);
     }
 
     private void setupLanguageSpinners() {
@@ -211,12 +252,22 @@ public class ConversationalActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedLanguage = parent.getItemAtPosition(position).toString();
-                Languages.setUser1Language(selectedLanguage);
                 
-                // Update User 2's spinner
-                user2Adapter.clear();
-                user2Adapter.addAll(Languages.getUser2Languages());
-                user2Adapter.notifyDataSetChanged();
+                // If the selected language is same as User 2's language, swap them
+                if (selectedLanguage.equals(Languages.getUser2Language())) {
+                    String prevUser1 = Languages.getUser1Language();
+                    
+                    // Update static variables first to avoid recursion loop
+                    Languages.setUser1Language(selectedLanguage);
+                    Languages.setUser2Language(prevUser1);
+                    
+                    // Update User 2 spinner selection
+                    int pos = user2Adapter.getPosition(prevUser1);
+                    if (pos >= 0) user2LanguageSpinner.setSelection(pos);
+                } else {
+                    // Just update User 1
+                    Languages.setUser1Language(selectedLanguage);
+                }
             }
 
             @Override
@@ -227,12 +278,22 @@ public class ConversationalActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 String selectedLanguage = parent.getItemAtPosition(position).toString();
-                Languages.setUser2Language(selectedLanguage);
                 
-                // Update User 1's spinner
-                user1Adapter.clear();
-                user1Adapter.addAll(Languages.getUser1Languages());
-                user1Adapter.notifyDataSetChanged();
+                // If the selected language is same as User 1's language, swap them
+                if (selectedLanguage.equals(Languages.getUser1Language())) {
+                    String prevUser2 = Languages.getUser2Language();
+                    
+                    // Update static variables first to avoid recursion loop
+                    Languages.setUser2Language(selectedLanguage);
+                    Languages.setUser1Language(prevUser2);
+                    
+                    // Update User 1 spinner selection
+                    int pos = user1Adapter.getPosition(prevUser2);
+                    if (pos >= 0) user1LanguageSpinner.setSelection(pos);
+                } else {
+                    // Just update User 2
+                    Languages.setUser2Language(selectedLanguage);
+                }
             }
 
             @Override
@@ -256,6 +317,13 @@ public class ConversationalActivity extends AppCompatActivity {
                 stopSpeechRecognition(false);
             }
         });
+
+        user1ClearButton.setOnClickListener(v -> {
+             updateInputTextView(user1InputText, "");
+        });
+        user2ClearButton.setOnClickListener(v -> {
+             updateInputTextView(user2InputText, "");
+        });
     }
 
     private void startSpeechRecognition(boolean isUser1) {
@@ -277,36 +345,34 @@ public class ConversationalActivity extends AppCompatActivity {
             isUser1Speaking = true;
             user1SpeakButton.setImageDrawable(stopIcon);
             pulseAnimation(user1SpeakButton);
-            updateTextView(user1Result, "", false);
+            updateInputTextView(user1InputText, "Listening...");
             
-            // Show loading dots for User 2 with User 1's color
-            user2LoadingDots.setDotColor(ContextCompat.getColor(this, R.color.user1_color));
-            user2LoadingDots.setVisibility(View.VISIBLE);
-            user2LoadingDots.startAnimation();
-            user2Result.setVisibility(View.GONE);
+            // Show loading in User 2's list (User 1 is speaking)
+            user2Adapter.setLoading(true, ContextCompat.getColor(this, R.color.user1_color));
+            user2RecyclerView.smoothScrollToPosition(user2Adapter.getItemCount() - 1);
             
             // Disable User 2's controls
             user2SpeakButton.setEnabled(false);
             user2SpeakButton.setAlpha(0.5f);
             user2LanguageSpinner.setEnabled(false);
             user2LanguageSpinner.setAlpha(0.5f);
+            user2ClearButton.setVisibility(View.GONE);
         } else {
             isUser2Speaking = true;
             user2SpeakButton.setImageDrawable(stopIcon);
             pulseAnimation(user2SpeakButton);
-            updateTextView(user2Result, "", false);
+            updateInputTextView(user2InputText, "Listening...");
             
-            // Show loading dots for User 1 with User 2's color
-            user1LoadingDots.setDotColor(ContextCompat.getColor(this, R.color.user2_color));
-            user1LoadingDots.setVisibility(View.VISIBLE);
-            user1LoadingDots.startAnimation();
-            user1Result.setVisibility(View.GONE);
+            // Show loading in User 1's list (User 2 is speaking)
+            user1Adapter.setLoading(true, ContextCompat.getColor(this, R.color.user2_color));
+            user1RecyclerView.smoothScrollToPosition(user1Adapter.getItemCount() - 1);
             
             // Disable User 1's controls
             user1SpeakButton.setEnabled(false);
             user1SpeakButton.setAlpha(0.5f);
             user1LanguageSpinner.setEnabled(false);
             user1LanguageSpinner.setAlpha(0.5f);
+            user1ClearButton.setVisibility(View.GONE);
         }
 
         // Get selected language for speech recognition
@@ -319,9 +385,9 @@ public class ConversationalActivity extends AppCompatActivity {
             public void onPartialResult(String text) {
                 runOnUiThread(() -> {
                     if (isUser1) {
-                        updateTextView(user1Result, text, false); // Input text, no background
+                        updateInputTextView(user1InputText, text);
                     } else {
-                        updateTextView(user2Result, text, false); // Input text, no background
+                        updateInputTextView(user2InputText, text);
                     }
                 });
             }
@@ -344,31 +410,27 @@ public class ConversationalActivity extends AppCompatActivity {
             user1SpeakButton.setImageDrawable(micIcon);
             user1SpeakButton.clearAnimation();
             
-            // Hide User 2's loading dots
-            user2LoadingDots.stopAnimation();
-            user2LoadingDots.setVisibility(View.GONE);
-            user2Result.setVisibility(View.VISIBLE);
-            
             // Re-enable User 2's controls
             user2SpeakButton.setEnabled(true);
             user2SpeakButton.setAlpha(1.0f);
             user2LanguageSpinner.setEnabled(true);
             user2LanguageSpinner.setAlpha(1.0f);
             
-            String text = user1Result.getText().toString();
-            if (!text.isEmpty()) {
+            String text = user1InputText.getText().toString();
+            // Don't translate "Listening..."
+            if (!text.isEmpty() && !text.equals("Listening...")) {
                 String targetLanguage = user2LanguageSpinner.getSelectedItem().toString();
-                translateAndDisplay(text, targetLanguage, true);
+                translateAndDisplay(text, targetLanguage, true, null, -1);
+            } else {
+                // If nothing was spoken, hide loading
+                user2Adapter.setLoading(false, 0);
             }
+            // Clear input after sending
+            updateInputTextView(user1InputText, "");
         } else {
             isUser2Speaking = false;
             user2SpeakButton.setImageDrawable(micIcon);
             user2SpeakButton.clearAnimation();
-            
-            // Hide User 1's loading dots
-            user1LoadingDots.stopAnimation();
-            user1LoadingDots.setVisibility(View.GONE);
-            user1Result.setVisibility(View.VISIBLE);
             
             // Re-enable User 1's controls
             user1SpeakButton.setEnabled(true);
@@ -376,11 +438,17 @@ public class ConversationalActivity extends AppCompatActivity {
             user1LanguageSpinner.setEnabled(true);
             user1LanguageSpinner.setAlpha(1.0f);
             
-            String text = user2Result.getText().toString();
-            if (!text.isEmpty()) {
+            String text = user2InputText.getText().toString();
+             // Don't translate "Listening..."
+            if (!text.isEmpty() && !text.equals("Listening...")) {
                 String targetLanguage = user1LanguageSpinner.getSelectedItem().toString();
-                translateAndDisplay(text, targetLanguage, false);
+                translateAndDisplay(text, targetLanguage, false, null, -1);
+            } else {
+                // If nothing was spoken, hide loading
+                user1Adapter.setLoading(false, 0);
             }
+            // Clear input after sending
+            updateInputTextView(user2InputText, "");
         }
     }
 
@@ -400,34 +468,22 @@ public class ConversationalActivity extends AppCompatActivity {
         animatorSet.start();
     }
 
-    private void updateTextView(TextView textView, String text, boolean isOutput) {
-        boolean isUser1 = (textView == user1Result);
-        
-        if (isOutput && !text.isEmpty()) {
-            // Set the appropriate speech bubble background
-            textView.setBackground(ContextCompat.getDrawable(this,
-                isUser1 ? R.drawable.speech_bubble_user1 : R.drawable.speech_bubble_user2));
-            // Add padding for better appearance
-            textView.setPadding(
-                dpToPx(24), // left
-                dpToPx(24), // top
-                dpToPx(24), // right
-                dpToPx(24)  // bottom
-            );
-            // Use white text for better contrast on colored backgrounds
-            textView.setTextColor(ContextCompat.getColor(this, android.R.color.white));
+    // New helper for input text views
+    private void updateInputTextView(TextView textView, String text) {
+        boolean isUser1 = (textView == user1InputText);
+        FloatingActionButton clearButton = isUser1 ? user1ClearButton : user2ClearButton;
+
+        if (text.isEmpty()) {
+            textView.setVisibility(View.GONE);
+            clearButton.setVisibility(View.GONE);
         } else {
-            // Reset background and padding for input text or empty text
-            textView.setBackground(null);
-            textView.setPadding(
-                dpToPx(16), // left
-                dpToPx(16), // top
-                dpToPx(16), // right
-                dpToPx(16)  // bottom
-            );
-            // Use user's color for input text
-            textView.setTextColor(ContextCompat.getColor(this, 
-                isUser1 ? R.color.user1_color : R.color.user2_color));
+            textView.setVisibility(View.VISIBLE);
+            // Hide clear button if it's just "Listening..."
+            if (text.equals("Listening...")) {
+                clearButton.setVisibility(View.GONE);
+            } else {
+                clearButton.setVisibility(View.VISIBLE);
+            }
         }
         
         textView.setText(text);
@@ -439,22 +495,9 @@ public class ConversationalActivity extends AppCompatActivity {
         return Math.round(dp * density);
     }
 
-    private void translateAndDisplay(String text, String targetLanguage, boolean isUser1) {
+    private void translateAndDisplay(String text, String targetLanguage, boolean isUser1, @Nullable ConversationalMessage messageToUpdate, int updatePosition) {
         // Start translation UI state
         startTranslation(isUser1);
-
-        // Show loading dots for translation
-        if (isUser1) {
-            user2LoadingDots.setDotColor(ContextCompat.getColor(this, R.color.user1_color));
-            user2LoadingDots.setVisibility(View.VISIBLE);
-            user2LoadingDots.startAnimation();
-            user2Result.setVisibility(View.GONE);
-        } else {
-            user1LoadingDots.setDotColor(ContextCompat.getColor(this, R.color.user2_color));
-            user1LoadingDots.setVisibility(View.VISIBLE);
-            user1LoadingDots.startAnimation();
-            user1Result.setVisibility(View.GONE);
-        }
 
         // Get translation mode
         String translationMode = Variables.isFormalTranslationMode ? "formal" : "casual";
@@ -478,17 +521,33 @@ public class ConversationalActivity extends AppCompatActivity {
                         if (!isFinishing()) {
                             runOnUiThread(() -> {
                                 if (isUser1) {
-                                    // Hide loading dots and show result
-                                    user2LoadingDots.stopAnimation();
-                                    user2LoadingDots.setVisibility(View.GONE);
-                                    user2Result.setVisibility(View.VISIBLE);
-                                    updateTextView(user2Result, translatedMessage, true);
+                                    // User 1 spoke, show on User 2's screen (user2Adapter)
+                                    user2Adapter.setLoading(false, 0); // Hide loading
+                                    
+                                    if (messageToUpdate != null && updatePosition != -1) {
+                                        // Update existing
+                                        user2Adapter.updateMessage(updatePosition, translatedMessage);
+                                    } else {
+                                        // New message
+                                        String messageId = UUID.randomUUID().toString();
+                                        ConversationalMessage msg = new ConversationalMessage(messageId, text, translatedMessage, true, sourceLanguage, targetLanguage);
+                                        user2Adapter.addMessage(msg);
+                                        user2RecyclerView.smoothScrollToPosition(user2Adapter.getItemCount() - 1);
+                                    }
                                 } else {
-                                    // Hide loading dots and show result
-                                    user1LoadingDots.stopAnimation();
-                                    user1LoadingDots.setVisibility(View.GONE);
-                                    user1Result.setVisibility(View.VISIBLE);
-                                    updateTextView(user1Result, translatedMessage, true);
+                                    // User 2 spoke, show on User 1's screen (user1Adapter)
+                                    user1Adapter.setLoading(false, 0); // Hide loading
+                                    
+                                    if (messageToUpdate != null && updatePosition != -1) {
+                                        // Update existing
+                                        user1Adapter.updateMessage(updatePosition, translatedMessage);
+                                    } else {
+                                        // New message
+                                        String messageId = UUID.randomUUID().toString();
+                                        ConversationalMessage msg = new ConversationalMessage(messageId, text, translatedMessage, false, sourceLanguage, targetLanguage);
+                                        user1Adapter.addMessage(msg);
+                                        user1RecyclerView.smoothScrollToPosition(user1Adapter.getItemCount() - 1);
+                                    }
                                 }
                                 enableControls(isUser1);
                             });
@@ -501,28 +560,157 @@ public class ConversationalActivity extends AppCompatActivity {
                             runOnUiThread(() -> {
                                 String errorText = "Translation failed: " + errorMessage;
                                 if (isUser1) {
-                                    // Hide loading dots and show error
-                                    user2LoadingDots.stopAnimation();
-                                    user2LoadingDots.setVisibility(View.GONE);
-                                    user2Result.setVisibility(View.VISIBLE);
-                                    updateTextView(user2Result, errorText, true);
+                                    user2Adapter.setLoading(false, 0);
+                                    CustomNotification.showNotification(ConversationalActivity.this, errorText, false);
                                 } else {
-                                    // Hide loading dots and show error
-                                    user1LoadingDots.stopAnimation();
-                                    user1LoadingDots.setVisibility(View.GONE);
-                                    user1Result.setVisibility(View.VISIBLE);
-                                    updateTextView(user1Result, errorText, true);
+                                    user1Adapter.setLoading(false, 0);
+                                    CustomNotification.showNotification(ConversationalActivity.this, errorText, false);
                                 }
                                 enableControls(isUser1);
-                                
-                                // Show error notification
-                                CustomNotification.showNotification(ConversationalActivity.this, 
-                                    "Translation failed: " + errorMessage, false);
                             });
                         }
                     }
                 }
         );
+    }
+    
+    @Override
+    public void onRegenerate(ConversationalMessage message, int position) {
+        // Check if we already have multiple variations
+        if (message.getVariations() != null && message.getVariations().size() > 1) {
+            // Cycle to the next variation
+            String nextVariation = message.getNextVariation();
+            boolean isUser1 = message.isFromUser1();
+            
+            if (isUser1) {
+                user2Adapter.updateMessage(position, nextVariation);
+            } else {
+                user1Adapter.updateMessage(position, nextVariation);
+            }
+        } else {
+            // Call API to get variations
+            regenerateTranslationApi(message, position);
+        }
+    }
+    
+    private void regenerateTranslationApi(ConversationalMessage message, int position) {
+        // Show loading state
+        message.setRegenerating(true);
+        if (message.isFromUser1()) {
+            user2Adapter.notifyItemChanged(position);
+        } else {
+            user1Adapter.notifyItemChanged(position);
+        }
+        
+        new AsyncTask<Void, Void, Boolean>() {
+            String originalText = message.getOriginalText();
+            String sourceLanguage = message.getSourceLanguage();
+            String targetLanguage = message.getTargetLanguage();
+            String messageId = message.getMessageId();
+            boolean isUser1 = message.isFromUser1();
+            Map<String, String> newVariations = new HashMap<>();
+
+            @Override
+            protected Boolean doInBackground(Void... voids) {
+                try {
+                    // Use API to regenerate
+                    JSONObject requestBody = new JSONObject();
+                    requestBody.put("text", originalText);
+                    requestBody.put("source_language", sourceLanguage);
+                    requestBody.put("target_language", targetLanguage);
+                    requestBody.put("variants", "multiple");
+                    requestBody.put("model", Variables.userTranslator != null ? Variables.userTranslator.toLowerCase() : "gemini");
+                    requestBody.put("translation_mode", Variables.isFormalTranslationMode ? "formal" : "casual");
+                    requestBody.put("room_id", sessionId);
+                    requestBody.put("message_id", messageId);
+                    requestBody.put("is_group", false);
+
+                    String apiUrl = Variables.API_TRANSLATE_SIMPLE_URL;
+                    URL url = new URL(apiUrl);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json; utf-8");
+                    conn.setRequestProperty("Accept", "application/json");
+                    conn.setDoOutput(true);
+                    conn.setConnectTimeout(15000);
+                    conn.setReadTimeout(15000);
+
+                    try (OutputStream os = conn.getOutputStream()) {
+                        byte[] input = requestBody.toString().getBytes("utf-8");
+                        os.write(input, 0, input.length);
+                    }
+
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode >= 200 && responseCode < 300) {
+                        BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream(), "utf-8"));
+                        StringBuilder response = new StringBuilder();
+                        String responseLine;
+                        while ((responseLine = br.readLine()) != null) {
+                            response.append(responseLine.trim());
+                        }
+                        
+                        JSONObject jsonResponse = new JSONObject(response.toString());
+                        if (jsonResponse.has("translations")) {
+                            JSONObject translations = jsonResponse.getJSONObject("translations");
+                            Iterator<String> keys = translations.keys();
+                            while (keys.hasNext()) {
+                                String key = keys.next();
+                                newVariations.put(key, translations.getString(key));
+                            }
+                            return true;
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return false;
+            }
+
+            @Override
+            protected void onPostExecute(Boolean success) {
+                // Clear regenerating state
+                message.setRegenerating(false);
+                
+                if (success && !newVariations.isEmpty()) {
+                    // Update message with new variations
+                    message.getVariations().clear(); // Clear initial single translation
+                    
+                    // Add variations in order (translation1, translation2, etc.)
+                    // Map might not be ordered, but we can try to extract known keys or just add all
+                    if (newVariations.containsKey("translation1")) message.addVariation(newVariations.get("translation1"));
+                    if (newVariations.containsKey("translation2")) message.addVariation(newVariations.get("translation2"));
+                    if (newVariations.containsKey("translation3")) message.addVariation(newVariations.get("translation3"));
+                    
+                    // If map had other keys or we just want to ensure we have content
+                    if (message.getVariations().isEmpty()) {
+                        for (String val : newVariations.values()) {
+                            message.addVariation(val);
+                        }
+                    }
+                    
+                    // Cycle to the next one (which effectively shows the first variation or next if we had one)
+                    // If we just fetched, we probably want to show the SECOND one if the first one was what we already had.
+                    // But usually API returns translation1 as best/similar.
+                    // Let's just cycle.
+                    String nextText = message.getNextVariation();
+                    
+                    if (isUser1) {
+                        user2Adapter.updateMessage(position, nextText);
+                    } else {
+                        user1Adapter.updateMessage(position, nextText);
+                    }
+                    // CustomNotification.showNotification(ConversationalActivity.this, "Regeneration successful", true);
+                } else {
+                    // Just notify adapter to restore original text and enable button
+                    if (isUser1) {
+                        user2Adapter.notifyItemChanged(position);
+                    } else {
+                        user1Adapter.notifyItemChanged(position);
+                    }
+                    CustomNotification.showNotification(ConversationalActivity.this, "Regeneration failed", false);
+                }
+            }
+        }.execute();
     }
 
     private void startTranslation(boolean isUser1) {
@@ -534,11 +722,15 @@ public class ConversationalActivity extends AppCompatActivity {
             user1SpeakButton.animate().alpha(disabledAlpha).setDuration(300);
             user1LanguageSpinner.setEnabled(false);
             user1LanguageSpinner.animate().alpha(disabledAlpha).setDuration(300);
+            user1ClearButton.setEnabled(false);
+            user1ClearButton.animate().alpha(disabledAlpha).setDuration(300);
         } else {
             user2SpeakButton.setEnabled(false);
             user2SpeakButton.animate().alpha(disabledAlpha).setDuration(300);
             user2LanguageSpinner.setEnabled(false);
             user2LanguageSpinner.animate().alpha(disabledAlpha).setDuration(300);
+            user2ClearButton.setEnabled(false);
+            user2ClearButton.animate().alpha(disabledAlpha).setDuration(300);
         }
     }
 
@@ -549,11 +741,15 @@ public class ConversationalActivity extends AppCompatActivity {
             user1SpeakButton.animate().alpha(1f).setDuration(300);
             user1LanguageSpinner.setEnabled(true);
             user1LanguageSpinner.animate().alpha(1f).setDuration(300);
+            user1ClearButton.setEnabled(true);
+            user1ClearButton.animate().alpha(1f).setDuration(300);
         } else {
             user2SpeakButton.setEnabled(true);
             user2SpeakButton.animate().alpha(1f).setDuration(300);
             user2LanguageSpinner.setEnabled(true);
             user2LanguageSpinner.animate().alpha(1f).setDuration(300);
+            user2ClearButton.setEnabled(true);
+            user2ClearButton.animate().alpha(1f).setDuration(300);
         }
     }
 
@@ -581,8 +777,9 @@ public class ConversationalActivity extends AppCompatActivity {
         }
         user1SpeakButton.clearAnimation();
         user2SpeakButton.clearAnimation();
-        user1LoadingDots.stopAnimation();
-        user2LoadingDots.stopAnimation();
+        // Remove direct usage of loading dots since they are now in adapter
+        // user1LoadingDots.stopAnimation(); 
+        // user2LoadingDots.stopAnimation();
     }
 
     @Override
@@ -629,4 +826,4 @@ public class ConversationalActivity extends AppCompatActivity {
             return Math.abs(input - 1f);
         }
     }
-} 
+}
