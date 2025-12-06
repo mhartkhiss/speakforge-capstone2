@@ -1062,6 +1062,12 @@ public class ConnectChatActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        // Show the end session confirmation dialog instead of finishing directly
+        endSession();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
 
