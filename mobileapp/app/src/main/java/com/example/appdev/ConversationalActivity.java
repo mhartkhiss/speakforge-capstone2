@@ -250,6 +250,7 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
                 TextView view = (TextView) super.getDropDownView(position, convertView, parent);
                 view.setTextColor(ContextCompat.getColor(getContext(), R.color.user2_color));
                 setFlagIcon(view, getItem(position));
+                view.setRotation(180);
                 return view;
             }
         };
