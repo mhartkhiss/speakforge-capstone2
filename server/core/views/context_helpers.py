@@ -27,11 +27,11 @@ from .enhanced_context import (
 # CONNECT CHAT CONTEXT FUNCTIONS (Used by ConnectChatActivity)
 # ============================================================================
 
-def get_enhanced_connect_chat_context(session_id, message_id, max_context_messages=25, current_user_id=None, recipient_id=None, session_start_time=None, use_enhancements=True):
+def get_enhanced_connect_chat_context(session_id, message_id, max_context_messages=25, current_user_id=None, recipient_id=None, session_start_time=None, use_enhancements=True, current_message_text=None):
     """
     Enhanced version: Get connect chat context with advanced features
     """
-    print(f"🚀 ENHANCED CONNECT CHAT: Processing session {session_id} with enhancements={use_enhancements}")
+    # print(f"🚀 ENHANCED CONNECT CHAT: Processing session {session_id} with enhancements={use_enhancements}")
     # Get messages
     messages_ref = db.reference(f'connect_chats/{session_id}')
     messages_query = messages_ref.order_by_child('timestamp').get()
@@ -58,6 +58,10 @@ def get_enhanced_connect_chat_context(session_id, message_id, max_context_messag
         # PARALLEL PROCESSING: Run analysis tasks simultaneously
         message_texts = [msg['data'].get('voiceText', msg['data'].get('message', '')) for msg in all_messages]
         
+        # Add current message to analysis if provided
+        if current_message_text:
+            message_texts.append(current_message_text)
+
         with ThreadPoolExecutor(max_workers=4) as executor:
             futures = {}
             
@@ -80,7 +84,7 @@ def get_enhanced_connect_chat_context(session_id, message_id, max_context_messag
             # Wait for topic analysis (needed for window sizing)
             try:
                 topic, confidence, keywords = futures['topic'].result()
-                print(f"🔍 ENHANCED CONNECT CHAT: Topic detected - {topic} (confidence: {confidence:.2f}) from {len(recent_for_topic)} recent messages")
+                # print(f"🔍 ENHANCED CONNECT CHAT: Topic detected - {topic} (confidence: {confidence:.2f}) from {len(recent_for_topic)} recent messages")
             except Exception as e:
                 print(f"⚠️ ENHANCED CONNECT CHAT: Error in topic analysis: {e}")
                 topic, confidence, keywords = 'general', 0.5, []
@@ -99,12 +103,12 @@ def get_enhanced_connect_chat_context(session_id, message_id, max_context_messag
                 complexity_score=complexity
             )
             max_context_messages = min(optimal_size, 50)  # Cap at 50 for performance
-            print(f"📏 ENHANCED CONNECT CHAT: Dynamic window size: {optimal_size} → {max_context_messages} (complexity: {complexity:.2f})")
+            # print(f"📏 ENHANCED CONNECT CHAT: Dynamic window size: {optimal_size} → {max_context_messages} (complexity: {complexity:.2f})")
             
             # Wait for semantic clustering
             try:
                 clusters = futures['clusters'].result()
-                print(f"🔗 ENHANCED CONNECT CHAT: Found {len(clusters)} semantic clusters")
+                # print(f"🔗 ENHANCED CONNECT CHAT: Found {len(clusters)} semantic clusters")
             except Exception as e:
                 print(f"⚠️ ENHANCED CONNECT CHAT: Error in semantic clustering: {e}")
                 clusters = []
@@ -130,7 +134,8 @@ def get_enhanced_connect_chat_context(session_id, message_id, max_context_messag
                         total_entities += 1
             
             if total_entities > 0:
-                print(f"🎭 ENHANCED CONNECT CHAT: Extracted {total_entities} entities: {dict(all_entities)}")
+                pass
+                # print(f"🎭 ENHANCED CONNECT CHAT: Extracted {total_entities} entities: {dict(all_entities)}")
         except Exception as e:
             print(f"⚠️ ENHANCED CONNECT CHAT: Error extracting entities: {e}")
             all_entities = {}
@@ -139,7 +144,7 @@ def get_enhanced_connect_chat_context(session_id, message_id, max_context_messag
         try:
             if current_user_id:
                 UserProfileManager.update_domain_interest(current_user_id, topic, 1.0)
-                print(f"👤 ENHANCED CONNECT CHAT: Updated user {current_user_id} interest in {topic}")
+                # print(f"👤 ENHANCED CONNECT CHAT: Updated user {current_user_id} interest in {topic}")
         except Exception as e:
             print(f"⚠️ ENHANCED CONNECT CHAT: Error updating user profile: {e}")
         
@@ -172,7 +177,7 @@ def get_enhanced_connect_chat_context(session_id, message_id, max_context_messag
         
         formatted_context.append(f"{speaker_label}: {message_text}")
     
-    print(f"✅ ENHANCED CONNECT CHAT: Returning {len(formatted_context)} messages with enhanced metadata")
+    # print(f"✅ ENHANCED CONNECT CHAT: Returning {len(formatted_context)} messages with enhanced metadata")
     return formatted_context, context_metadata
 
 def get_connect_chat_context(session_id, message_id, max_context_messages=25, current_user_id=None, recipient_id=None, session_start_time=None):
@@ -245,7 +250,7 @@ def translate_with_enhanced_context(text, source_language, target_language, cont
     """
     Enhanced translation with advanced context awareness
     """
-    print(f"🚀 ENHANCED TRANSLATION: Processing '{text[:50]}...' with topic={context_metadata.get('topic') if context_metadata else 'none'}")
+    # print(f"🚀 ENHANCED TRANSLATION: Processing '{text[:50]}...' with topic={context_metadata.get('topic') if context_metadata else 'none'}")
     # Check translation memory first
     if context_metadata:
         cached_translation = TranslationMemoryManager.retrieve_translation(
@@ -256,7 +261,7 @@ def translate_with_enhanced_context(text, source_language, target_language, cont
             topic=context_metadata.get('topic')
         )
         if cached_translation:
-            print(f"💾 ENHANCED TRANSLATION: Using cached translation from memory")
+            # print(f"💾 ENHANCED TRANSLATION: Using cached translation from memory")
             return cached_translation
     
     # Get user preferences if available
@@ -267,7 +272,7 @@ def translate_with_enhanced_context(text, source_language, target_language, cont
                 user_id, 
                 context_type=context_metadata.get('topic') if context_metadata else None
             )
-            print(f"👤 ENHANCED TRANSLATION: Loaded user preferences for {user_id}")
+            # print(f"👤 ENHANCED TRANSLATION: Loaded user preferences for {user_id}")
     except Exception as e:
         print(f"⚠️ ENHANCED TRANSLATION: Error loading user preferences: {e}")
         user_preferences = {'formality': 'casual', 'glossary': {}}
@@ -280,7 +285,7 @@ def translate_with_enhanced_context(text, source_language, target_language, cont
     if context_metadata and context_metadata.get('topic'):
         try:
             topic = context_metadata['topic']
-            print(f"📋 ENHANCED TRANSLATION: AI Detected Topic: '{topic}'")
+            # print(f"📋 ENHANCED TRANSLATION: AI Detected Topic: '{topic}'")
             
             # 1. First inject the dynamic topic directly
             domain_prompt = f"CONTEXT: The current conversation topic is '{topic}'. Adjust tone and vocabulary accordingly."
@@ -311,7 +316,7 @@ def translate_with_enhanced_context(text, source_language, target_language, cont
             
             # 3. Enhance with entities if available
             if context_metadata.get('entities'):
-                print(f"🎭 ENHANCED TRANSLATION: Enhancing prompt with entities: {list(context_metadata['entities'].keys())}")
+                # print(f"🎭 ENHANCED TRANSLATION: Enhancing prompt with entities: {list(context_metadata['entities'].keys())}")
                 domain_prompt = DomainSpecificPromptManager.enhance_prompt_with_context(
                     domain_prompt,
                     context_metadata['entities'],
@@ -360,7 +365,7 @@ def translate_with_enhanced_context(text, source_language, target_language, cont
     if text.startswith('"') and text.endswith('"'):
         text = text[1:-1]
     
-    print(f"Model: {model}, Topic: {context_metadata.get('topic') if context_metadata else 'general'}")
+    # print(f"Model: {model}, Topic: {context_metadata.get('topic') if context_metadata else 'general'}")
     
     try:
         # Get translation from AI model

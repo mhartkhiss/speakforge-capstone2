@@ -355,7 +355,7 @@ class TopicAnalyzer:
         # We now allow the AI to analyze every message sequence to ensure 
         # dynamic topic shifts are detected immediately without manual keyword maintenance.
         
-        print(f"🤖 AI TOPIC: Using AI classification (Always Active for Dynamic Awareness)")
+        # print(f"🤖 AI TOPIC: Using AI classification (Always Active for Dynamic Awareness)")
         
         # Prepare conversation context (limit for performance)
         recent_context = "\n".join(messages[-5:])  # Only last 5 messages for speed
@@ -394,7 +394,7 @@ Example: Casual Greeting,0.95
             
             if message.content:
                 response = message.content[0].text.strip()
-                print(f"🤖 AI TOPIC RESPONSE: {response}")
+                # print(f"🤖 AI TOPIC RESPONSE: {response}")
                 
                 # Parse response: "anime,0.85"
                 if ',' in response:
@@ -408,7 +408,7 @@ Example: Casual Greeting,0.95
                         # Extract simple keywords from the recent context
                         keywords = cls._extract_simple_keywords(recent_context, topic)
                         
-                        print(f"🎯 AI TOPIC RESULT: {topic} (confidence: {confidence:.2f})")
+                        # print(f"🎯 AI TOPIC RESULT: {topic} (confidence: {confidence:.2f})")
                         return (topic, confidence, keywords)
                     except ValueError:
                         print(f"⚠️ AI TOPIC: Failed to parse confidence: {confidence_str}")
@@ -724,7 +724,7 @@ Example: anime,0.85
             
             if message.content:
                 response = message.content[0].text.strip()
-                print(f"🤖 AI TOPIC RESPONSE: {response}")
+                # print(f"🤖 AI TOPIC RESPONSE: {response}")
                 
                 # Parse response: "anime,0.85"
                 if ',' in response:

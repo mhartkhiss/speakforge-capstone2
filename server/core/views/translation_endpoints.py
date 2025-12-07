@@ -67,7 +67,8 @@ def translate_db_context(request):
                     get_enhanced_connect_chat_context,
                     room_id, message_id, context_depth,
                     current_user_id, recipient_id,
-                    session_start_time, use_enhanced
+                    session_start_time, use_enhanced,
+                    text_to_translate  # Pass current message for immediate topic detection
                 )
             
             # Task 2: Get user preferences (runs in parallel with context retrieval)
@@ -84,7 +85,7 @@ def translate_db_context(request):
                     # If context is None (error), treat as empty list
                     if context is None:
                         context = []
-                    print(f"Retrieved {len(context)} context messages with topic: {context_metadata.get('topic', 'general')}")
+                    # print(f"Retrieved {len(context)} context messages with topic: {context_metadata.get('topic', 'general')}")
                 except Exception as e:
                     print(f"Error getting enhanced connect chat context: {str(e)}")
                     # Fallback to basic context
@@ -99,13 +100,16 @@ def translate_db_context(request):
             if 'profile' in futures:
                 try:
                     user_profile = futures['profile'].result()
-                    print(f"✅ PARALLEL: Retrieved user profile in parallel")
+                    # print(f"✅ PARALLEL: Retrieved user profile in parallel")
                 except Exception as e:
                     print(f"⚠️ PARALLEL: Error getting user profile: {str(e)}")
 
         # Get translation with enhanced context
         if context and len(context) > 0 and use_enhanced:
-            print(f"🎯 TRANSLATION METHOD: Enhanced context translation (topic: {context_metadata.get('topic', 'unknown')})")
+            print(f"\n1. Topic Detected: {context_metadata.get('topic', 'unknown')}")
+            print(f"2. Model Used: {model}")
+            print(f"3. Number of reference message analyzed: {len(context)}")
+            
             try:
                 translated_text = translate_with_enhanced_context(
                     text_to_translate, source_language, target_language, 
@@ -117,10 +121,16 @@ def translate_db_context(request):
                 print(f"📝 FALLBACK: Using basic context translation instead")
                 translated_text = translate_with_context(text_to_translate, source_language, target_language, context, model, translation_mode, current_user_id, room_id)
         elif context and len(context) > 0:
-            print(f"📝 TRANSLATION METHOD: Basic context translation ({len(context)} messages)")
+            print(f"\n1. Topic Detected: General (Basic Context)")
+            print(f"2. Model Used: {model}")
+            print(f"3. Number of reference message analyzed: {len(context)}")
+            
             translated_text = translate_with_context(text_to_translate, source_language, target_language, context, model, translation_mode, current_user_id, room_id)
         else:
-            print(f"⚡ TRANSLATION METHOD: No context translation (fallback)")
+            print(f"\n1. Topic Detected: None")
+            print(f"2. Model Used: {model}")
+            print(f"3. Number of reference message analyzed: 0")
+            
             # Fallback to regular translation if no context
             translated_text = get_translation(text_to_translate, source_language, target_language, variants, translation_mode, model, current_user_id, room_id, 'translate_db_context')
 
@@ -210,47 +220,50 @@ def regenerate_translation(request):
         }, status=400)
 
     try:
-        # PARALLEL PROCESSING: Fetch message and context simultaneously
+        # Fetch message first to get the text for context analysis
         ref_path = 'connect_chats'
+        message_ref = db.reference(f'{ref_path}/{room_id}/{message_id}')
+        message_data = message_ref.get()
+        
+        if not message_data:
+            return Response({"error": "Message not found"}, status=404)
+            
+        # Get the text to translate (use voiceText for connect chats)
+        text_to_translate = message_data.get('voiceText', message_data.get('message', ''))
+        
+        if not text_to_translate:
+            return Response({"error": "No text found to translate"}, status=400)
+            
+        # PARALLEL PROCESSING: Fetch context and profile
         context = []
         context_metadata = {}
         user_profile = None
-        message_data = None
         
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=2) as executor:
             futures = {}
             
-            # Task 1: Get the message to regenerate
-            futures['message'] = executor.submit(
-                lambda: db.reference(f'{ref_path}/{room_id}/{message_id}').get()
-            )
-            
-            # Task 2: Get conversation context (if enabled)
-            if use_context and current_user_id and recipient_id:
+            # Task 1: Get conversation context (if enabled)
+            if use_context:
                 futures['context'] = executor.submit(
                     get_enhanced_connect_chat_context,
                     room_id, message_id, context_depth,
                     current_user_id, recipient_id,
-                    session_start_time, use_enhanced
+                    session_start_time, use_enhanced,
+                    text_to_translate # Pass text for topic analysis
                 )
             
-            # Task 3: Get user preferences (if enabled)
+            # Task 2: Get user preferences (if enabled)
             if use_enhanced and current_user_id:
                 futures['profile'] = executor.submit(
                     UserProfileManager.get_user_preferences,
                     current_user_id
                 )
             
-            # Wait for message data
-            message_data = futures['message'].result()
-            if not message_data:
-                return Response({"error": "Message not found"}, status=404)
-            
             # Wait for context (if requested)
             if 'context' in futures:
                 try:
                     context, context_metadata = futures['context'].result()
-                    print(f"Regeneration: Retrieved {len(context)} context messages")
+                    # print(f"Regeneration: Retrieved {len(context)} context messages")
                 except Exception as e:
                     print(f"Error getting context for regeneration: {str(e)}")
                     # Fallback to basic context
@@ -263,29 +276,32 @@ def regenerate_translation(request):
             if 'profile' in futures:
                 try:
                     user_profile = futures['profile'].result()
-                    print(f"✅ PARALLEL REGEN: Retrieved user profile in parallel")
+                    # print(f"✅ PARALLEL REGEN: Retrieved user profile in parallel")
                 except Exception as e:
                     print(f"⚠️ PARALLEL REGEN: Error getting user profile: {str(e)}")
-        
-        # Get the text to translate (use voiceText for connect chats)
-        text_to_translate = message_data.get('voiceText', message_data.get('message', ''))
-        
-        if not text_to_translate:
-            return Response({"error": "No text found to translate"}, status=400)
 
         # Get new translation with context
         if context and len(context) > 0 and use_enhanced:
-            print(f"🎯 REGENERATION: Enhanced context translation")
+            print(f"\n[REGENERATE] 1. Topic Detected: {context_metadata.get('topic', 'unknown')}")
+            print(f"[REGENERATE] 2. Model Used: {model}")
+            print(f"[REGENERATE] 3. Number of reference messages analyzed: {len(context)}")
+            
             translated_text = translate_with_enhanced_context(
                 text_to_translate, source_language, target_language, 
                 context, model, translation_mode, 
                 context_metadata, current_user_id
             )
         elif context and len(context) > 0:
-            print(f"📝 REGENERATION: Basic context translation")
+            print(f"\n[REGENERATE] 1. Topic Detected: General (Basic)")
+            print(f"[REGENERATE] 2. Model Used: {model}")
+            print(f"[REGENERATE] 3. Number of reference messages analyzed: {len(context)}")
+            
             translated_text = translate_with_context(text_to_translate, source_language, target_language, context, model, translation_mode, current_user_id, room_id)
         else:
-            print(f"⚡ REGENERATION: No context translation")
+            print(f"\n[REGENERATE] 1. Topic Detected: None")
+            print(f"[REGENERATE] 2. Model Used: {model}")
+            print(f"[REGENERATE] 3. Number of reference messages analyzed: 0")
+            
             # Fallback to regular translation
             translated_text = get_translation(text_to_translate, source_language, target_language, variants, translation_mode, model, current_user_id, room_id, 'regenerate_translation')
 
