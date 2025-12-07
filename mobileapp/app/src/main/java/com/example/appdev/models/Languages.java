@@ -10,7 +10,7 @@ import java.util.Map;
 public class Languages {
     private String language_name;
     private static String user1Language = "English";
-    private static String user2Language = "Tagalog";
+    private static String user2Language = "Bisaya";
     
     // Map to store language name to locale mappings
     private static final Map<String, Locale> LANGUAGE_LOCALES = new HashMap<>();

@@ -37,6 +37,7 @@
                     android:layout_height="30dp"
                     android:src="@drawable/translator_icon_gemini"
                     android:layout_marginTop="4dp"
+                    android:layout_marginStart="10dp"
                     app:tint="@null"/>
 
                 <TextView
@@ -58,7 +59,7 @@
                 android:fontFamily="@font/poppins_semibold"
                 android:textColor="#202020"
                 android:layout_marginTop="-10dp"
-                android:layout_marginStart="34dp"/>
+                android:layout_marginStart="44dp"/>
 
         </LinearLayout>
 

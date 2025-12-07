@@ -213,6 +213,7 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
             public View getView(int position, View convertView, ViewGroup parent) {
                 TextView view = (TextView) super.getView(position, convertView, parent);
                 view.setTextColor(ContextCompat.getColor(getContext(), R.color.user1_color));
+                setFlagIcon(view, getItem(position));
                 return view;
             }
 
@@ -220,6 +221,7 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
             public View getDropDownView(int position, View convertView, ViewGroup parent) {
                 TextView view = (TextView) super.getDropDownView(position, convertView, parent);
                 view.setTextColor(ContextCompat.getColor(getContext(), R.color.user1_color));
+                setFlagIcon(view, getItem(position));
                 return view;
             }
         };
@@ -239,6 +241,7 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
             public View getView(int position, View convertView, ViewGroup parent) {
                 TextView view = (TextView) super.getView(position, convertView, parent);
                 view.setTextColor(ContextCompat.getColor(getContext(), R.color.user2_color));
+                setFlagIcon(view, getItem(position));
                 return view;
             }
 
@@ -246,6 +249,7 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
             public View getDropDownView(int position, View convertView, ViewGroup parent) {
                 TextView view = (TextView) super.getDropDownView(position, convertView, parent);
                 view.setTextColor(ContextCompat.getColor(getContext(), R.color.user2_color));
+                setFlagIcon(view, getItem(position));
                 return view;
             }
         };
@@ -310,6 +314,23 @@ public class ConversationalActivity extends AppCompatActivity implements Convers
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
+    }
+
+    private void setFlagIcon(TextView view, String language) {
+        Drawable icon = null;
+        if ("English".equalsIgnoreCase(language)) {
+            icon = ContextCompat.getDrawable(this, R.drawable.ic_flag_us);
+        } else if ("Bisaya".equalsIgnoreCase(language)) {
+            icon = ContextCompat.getDrawable(this, R.drawable.ic_flag_ph);
+        }
+        
+        if (icon != null) {
+            icon.setBounds(0, 0, dpToPx(24), dpToPx(24));
+            view.setCompoundDrawables(icon, null, null, null);
+            view.setCompoundDrawablePadding(dpToPx(8));
+        } else {
+            view.setCompoundDrawables(null, null, null, null);
+        }
     }
 
     private void setupClickListeners() {

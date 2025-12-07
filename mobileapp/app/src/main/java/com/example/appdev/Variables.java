@@ -34,7 +34,7 @@ public class Variables {
     public static int openAiPrompt = 1;
     public static boolean isFormalTranslationMode = false;
     public static boolean isContextAwareTranslation = true; // Default to enabled
-    public static boolean isDevelopmentMode = true;
+    public static boolean isDevelopmentMode = false;
     public static int contextDepth = 5; // Default context depth
 
     // Offline Mode Flag
