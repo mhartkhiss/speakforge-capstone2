@@ -51,7 +51,7 @@
                 app:tint="#FF5722" />
         </FrameLayout>
 
-        <TextView
+        <EditText
             android:id="@+id/recognizedText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -60,7 +60,11 @@
             android:gravity="center"
             android:minHeight="60dp"
             android:textColor="#424242"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:hint="Say something..."
+            android:inputType="textMultiLine|textCapSentences"
+            android:background="@android:color/transparent"
+            android:padding="8dp" />
 
         <View
             android:layout_width="match_parent"

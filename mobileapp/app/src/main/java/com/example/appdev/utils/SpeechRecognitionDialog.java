@@ -12,8 +12,10 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.view.MotionEvent;
 
 import androidx.annotation.NonNull;
 
@@ -21,7 +23,7 @@ import com.example.appdev.R;
 import com.google.android.material.button.MaterialButton;
 
 public class SpeechRecognitionDialog extends Dialog {
-    private TextView recognizedText;
+    private EditText recognizedText;
     private MaterialButton btnCancel, btnDone;
     private ImageView pulseCircle1, pulseCircle2;
     private SpeechRecognitionListener listener;
@@ -34,6 +36,7 @@ public class SpeechRecognitionDialog extends Dialog {
     public interface SpeechRecognitionListener {
         void onCancelled();
         void onFinished(String text);
+        void onEditingStarted();
     }
 
     public SpeechRecognitionDialog(@NonNull Context context, SpeechRecognitionListener listener, boolean isUpsideDown) {
@@ -53,6 +56,15 @@ public class SpeechRecognitionDialog extends Dialog {
         btnDone = findViewById(R.id.btnDone);
         pulseCircle1 = findViewById(R.id.pulseCircle1);
         pulseCircle2 = findViewById(R.id.pulseCircle2);
+
+        recognizedText.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                if (listener != null) {
+                    listener.onEditingStarted();
+                }
+            }
+            return false;
+        });
 
         // If it's for User 2 (top), rotate the entire dialog window
         if (isUpsideDown) {

@@ -133,6 +133,7 @@ public class SpeechRecognitionHelper {
     public void startSpeechRecognition(SpeechRecognitionCallback callback, boolean isUpsideDown) {
         this.callback = callback;
         this.isUpsideDown = isUpsideDown;
+        this.isListening = true; // Set isListening to true
         
         // Get the user's selected language
         String userLanguage = Variables.userLanguage != null ? Variables.userLanguage : "English";
@@ -163,6 +164,11 @@ public class SpeechRecognitionHelper {
                 if (!text.isEmpty() && callback != null) {
                     callback.onSpeechResult(text);
                 }
+            }
+
+            @Override
+            public void onEditingStarted() {
+                stopListening(false);
             }
         }, isUpsideDown);
 
@@ -196,6 +202,15 @@ public class SpeechRecognitionHelper {
 
                 @Override
                 public void onError(int error) {
+                    if (!isListening) return;
+                    
+                    // Restart listening on recoverable errors
+                    if (error == SpeechRecognizer.ERROR_NO_MATCH || 
+                        error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                        speechRecognizer.startListening(recognizerIntent);
+                        return;
+                    }
+
                     String errorMessage;
                     switch (error) {
                         case SpeechRecognizer.ERROR_AUDIO:
@@ -213,44 +228,41 @@ public class SpeechRecognitionHelper {
                         case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
                             errorMessage = "Network timeout";
                             break;
-                        case SpeechRecognizer.ERROR_NO_MATCH:
-                            errorMessage = "No speech input";
-                            break;
                         case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
                             errorMessage = "Recognition service busy";
                             break;
                         case SpeechRecognizer.ERROR_SERVER:
                             errorMessage = "Server error";
                             break;
-                        case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                            errorMessage = "No speech input";
-                            break;
                         default:
                             errorMessage = "Speech recognition error";
                             break;
                     }
-                    if (speechDialog != null && speechDialog.isShowing()) {
-                        speechDialog.dismiss();
-                    }
+                    // Don't dismiss dialog on error, allow user to edit what was captured or retry
                     CustomNotification.showNotification(activity, errorMessage, false);
+                    isListening = false; // Stop listening state on fatal error
                 }
 
                 @Override
                 public void onResults(Bundle results) {
+                    if (!isListening) return;
                     ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                     if (matches != null && !matches.isEmpty()) {
                         String text = matches.get(0);
-                        speechBuilder.append(text);
+                        speechBuilder.append(text).append(" "); // Add space between segments
                         speechDialog.updateRecognizedText(speechBuilder.toString());
                     }
+                    // Continue listening
+                    speechRecognizer.startListening(recognizerIntent);
                 }
 
                 @Override
                 public void onPartialResults(Bundle partialResults) {
+                    if (!isListening) return;
                     ArrayList<String> matches = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                     if (matches != null && !matches.isEmpty()) {
                         String text = matches.get(0);
-                        speechDialog.updateRecognizedText(text);
+                        speechDialog.updateRecognizedText(speechBuilder.toString() + text);
                     }
                 }
 
@@ -275,9 +287,15 @@ public class SpeechRecognitionHelper {
     }
 
     public void stopListening() {
+        stopListening(true);
+    }
+
+    public void stopListening(boolean dismissDialog) {
         isListening = false;
-        speechRecognizer.stopListening();
-        if (speechDialog != null && speechDialog.isShowing()) {
+        if (speechRecognizer != null) {
+            speechRecognizer.stopListening();
+        }
+        if (dismissDialog && speechDialog != null && speechDialog.isShowing()) {
             speechDialog.dismiss();
         }
     }
